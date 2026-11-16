@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '@/views/Login.vue'
 import GateTransaction from '@/views/GateTransaction.vue'
 import ReceivingModule from '@/views/ReceivingModule.vue'
+import BookingSlotModule from '@/views/BookingSlotModule.vue'
+import VerifikasiEbastModule from '@/views/VerifikasiEbastModule.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,6 +15,18 @@ const router = createRouter({
       path: '/receiving',
       name: 'receiving',
       component: ReceivingModule,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/booking',
+      name: 'booking',
+      component: BookingSlotModule,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/ebast',
+      name: 'ebast',
+      component: VerifikasiEbastModule,
       meta: { requiresAuth: true },
     },
   ],
