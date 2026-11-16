@@ -42,6 +42,13 @@ function read(source: RecordData | null, keys: string[]) {
     )
   return key && source ? source[key] : undefined
 }
+function asString(value: unknown): string {
+  return value == null ? '' : String(value)
+}
+function asNumber(value: unknown): number {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
 function message(data: ApiResponse) {
   return data.message || 'Permintaan gagal.'
 }
@@ -96,20 +103,21 @@ async function submit() {
   const items = inspections(job.value)
   const payloadItems: (RecordData | null)[] = items.length ? items : [null]
   const payload: GatePayload[] = payloadItems.map((inspeksi) => ({
-    noSpmk: read(job.value, ['noSpmk']),
-    noJob: String(read(job.value, ['noJob']) ?? noJob.value),
-    noBlAwb: read(inspeksi, ['noBlAwb']),
-    platNo: read(job.value, ['platNo']),
-    gateInDate: mode.value === 'in' ? gateDate : read(job.value, ['gateInDate']),
-    beratIn: mode.value === 'in' ? Number(weight.value) : beratIn.value,
+    noSpmk: asString(read(job.value, ['noSpmk'])),
+    noJob: asString(read(job.value, ['noJob']) ?? noJob.value),
+    noBlAwb: asString(read(inspeksi, ['noBlAwb'])),
+    platNo: asString(read(job.value, ['platNo'])),
+    gateInDate:
+      mode.value === 'in' ? gateDate : asString(read(job.value, ['gateInDate'])),
+    beratIn: mode.value === 'in' ? asNumber(weight.value) : beratIn.value,
     ...(mode.value === 'out'
       ? {
           gateOutDate: gateDate,
-          beratOut: Number(weight.value),
+          beratOut: asNumber(weight.value),
           netto: Math.abs(beratIn.value - Number(weight.value)),
         }
       : {}),
-    colli: read(inspeksi, ['colli']) ?? read(job.value, ['colli']),
+    colli: asNumber(read(inspeksi, ['colli']) ?? read(job.value, ['colli'])),
   }))
   try {
     const { data } = await api.post<ApiResponse>('/sendDataGatePtosm', payload)
