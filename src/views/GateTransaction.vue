@@ -24,7 +24,7 @@ const gateInDate = ref('')
 const beratIn = ref('')
 const gateOutDate = ref('')
 const beratOut = ref('')
-const colli = ref('')
+const colli = ref<number | ''>('')
 const loading = ref(false)
 const sending = ref(false)
 const error = ref('')
@@ -131,7 +131,7 @@ async function lookup() {
     job.value = result
     gateInDate.value = currentDateTimeLocal()
     gateOutDate.value = currentDateTimeLocal()
-    colli.value = '0'
+    colli.value = 0
     await nextTick()
     gateInWeightInput.value?.focus()
   } catch (requestError) {
@@ -160,11 +160,14 @@ async function submit() {
   const nettoValue = netto.value
   if (
     !Number.isFinite(inWeight) ||
+    inWeight < 0 ||
     !Number.isFinite(outWeight) ||
-    !Number.isFinite(colliCount) ||
+    outWeight < 0 ||
+    !Number.isInteger(colliCount) ||
+    colliCount < 0 ||
     nettoValue == null
   ) {
-    error.value = 'Berat dan colli harus berupa angka yang valid.'
+    error.value = 'Berat harus berupa angka non-negatif dan colli harus bilangan bulat minimal 0.'
     return
   }
 
@@ -330,7 +333,7 @@ function numberOnly(event: KeyboardEvent) {
                 <label class="block text-sm font-medium text-slate-700">
                   Colli
                   <input
-                    v-model="colli"
+                    v-model.number="colli"
                     @keydown="numberOnly"
                     type="number"
                     min="0"
@@ -346,7 +349,11 @@ function numberOnly(event: KeyboardEvent) {
               <p class="flex-1 rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-700">
                 Netto (kg):
                 <strong class="ml-1 text-lg text-slate-900">
-                  {{ netto == null ? '—' : netto.toLocaleString('id-ID') }}
+                  {{
+                    netto == null
+                      ? '—'
+                      : netto.toLocaleString('id-ID', { maximumFractionDigits: 10 })
+                  }}
                 </strong>
                 <span v-if="netto == null" class="ml-1 text-slate-500">
                   (isi berat In dan Out)
