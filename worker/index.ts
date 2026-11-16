@@ -9,6 +9,7 @@ interface LoginRequest {
 }
 
 const LOGIN_URL = 'https://ptosm.api.pelindo.co.id/auth/loginRDS'
+const INTEGRATION_API = 'https://dev-ptosm-api.ilcs.co.id'
 
 function corsHeaders(request: Request, env: Env): Headers {
   const headers = new Headers({
@@ -73,11 +74,50 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
   }
 }
 
+async function proxyIntegration(request: Request): Promise<Response> {
+  const incomingUrl = new URL(request.url)
+  const upstreamUrl = new URL(`${incomingUrl.pathname}${incomingUrl.search}`, INTEGRATION_API)
+  const headers = new Headers()
+
+  for (const name of ['accept', 'authorization', 'content-type']) {
+    const value = request.headers.get(name)
+    if (value) headers.set(name, value)
+  }
+
+  try {
+    const upstream = await fetch(upstreamUrl, {
+      method: request.method,
+      headers,
+      body:
+        request.method === 'GET' || request.method === 'HEAD'
+          ? undefined
+          : await request.arrayBuffer(),
+    })
+    const responseHeaders = new Headers()
+    const contentType = upstream.headers.get('Content-Type')
+    if (contentType) responseHeaders.set('Content-Type', contentType)
+
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: responseHeaders,
+    })
+  } catch {
+    return Response.json(
+      { message: 'Tidak dapat terhubung ke server integrasi.' },
+      { status: 502 },
+    )
+  }
+}
+
 export default {
   fetch(request: Request, env: Env): Promise<Response> | Response {
     const url = new URL(request.url)
     if (url.pathname === '/auth/loginRDS') {
       return handleLogin(request, env)
+    }
+    if (url.pathname.startsWith('/integrasi/npl/')) {
+      return proxyIntegration(request)
     }
 
     return env.ASSETS.fetch(request)
