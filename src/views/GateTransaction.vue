@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import axios from 'axios'
 import { computed, nextTick, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import api from '@/services/api'
 
 type Mode = 'in' | 'out'
@@ -29,7 +28,6 @@ const sending = ref(false)
 const error = ref('')
 const success = ref('')
 const weightInput = ref<HTMLInputElement | null>(null)
-const router = useRouter()
 const busy = computed(() => loading.value || sending.value)
 const beratIn = computed(() => Number(read(job.value, ['beratIn', 'BERAT_IN', 'berat_in'])) || 0)
 const netto = computed(() => Math.abs(beratIn.value - Number(weight.value || 0)))
@@ -65,10 +63,6 @@ function reset() {
   error.value = ''
   success.value = ''
   nextTick(() => document.getElementById('no-job')?.focus())
-}
-async function logout() {
-  localStorage.removeItem('access_token')
-  await router.replace('/login')
 }
 async function lookup() {
   if (!noJob.value.trim() || busy.value) return
@@ -143,18 +137,11 @@ function numberOnly(e: KeyboardEvent) {
     <section
       class="mx-auto max-w-3xl overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200"
     >
-      <header class="flex items-start justify-between gap-4 bg-blue-700 px-6 py-5 text-white">
+      <header class="bg-blue-700 px-6 py-5 text-white">
         <div>
           <h1 class="text-xl font-bold">Port Gate Operation</h1>
           <p class="text-sm text-blue-100">Transaksi Gate In &amp; Gate Out</p>
         </div>
-        <button
-          type="button"
-          @click="logout"
-          class="rounded-lg border border-blue-300 px-3 py-2 text-sm font-semibold hover:bg-blue-800"
-        >
-          Logout
-        </button>
       </header>
       <div class="p-6">
         <div class="mb-6 grid grid-cols-2 rounded-lg bg-slate-100 p-1">
