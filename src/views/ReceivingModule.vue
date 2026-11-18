@@ -180,119 +180,114 @@ onMounted(loadReceiving)
 </script>
 
 <template>
-  <main class="min-h-[calc(100vh-4rem)] bg-slate-100 p-4 sm:p-6">
-    <div class="mx-auto max-w-7xl">
-      <div class="mb-6">
-        <p class="text-sm font-semibold uppercase tracking-wide text-blue-700">Operasional Pelabuhan</p>
-        <h1 class="mt-1 text-2xl font-bold text-slate-900">Receiving Module</h1>
-        <p class="mt-1 text-sm text-slate-500">Daftar kegiatan vessel dan pengiriman realisasi.</p>
+  <main class="page">
+    <div class="mx-auto max-w-7xl space-y-6">
+      <div>
+        <p class="page-eyebrow">Operasional Pelabuhan</p>
+        <h1 class="page-title">Receiving</h1>
+        <p class="page-subtitle">Daftar kegiatan vessel dan pengiriman realisasi receiving.</p>
       </div>
 
-      <p v-if="success" role="status" class="mb-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
-        {{ success }}
-      </p>
-      <p v-if="error" role="alert" class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-        {{ error }}
-      </p>
+      <p v-if="success" role="status" class="alert-success">{{ success }}</p>
+      <p v-if="error" role="alert" class="alert-error">{{ error }}</p>
 
       <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
-        <section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-          <header class="border-b border-slate-200 px-5 py-4 sm:px-6">
-            <h2 class="text-lg font-bold text-slate-900">Daftar Kegiatan Vessel Receiving</h2>
-            <p class="mt-1 text-sm text-slate-500">Cari kegiatan berdasarkan nomor PKK.</p>
+        <section class="card">
+          <header class="card-header">
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="card-title">Kegiatan Vessel Receiving</h2>
+              <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+                {{ receivingItems.length }} data
+              </span>
+            </div>
             <form class="mt-4 flex gap-2" @submit.prevent="loadReceiving">
               <input
                 v-model="noPkkSearch"
                 type="search"
-                placeholder="No. PKK"
-                class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                placeholder="Cari No. PKK"
+                aria-label="Cari berdasarkan No. PKK"
+                class="input mt-0 min-w-0 flex-1"
               />
-              <button
-                :disabled="loading"
-                class="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-              >
-                {{ loading ? 'Memuat...' : 'Cari' }}
+              <button :disabled="loading" class="btn btn-primary px-5">
+                <span v-if="loading" class="spinner" aria-hidden="true" />
+                {{ loading ? 'Memuat' : 'Cari' }}
               </button>
             </form>
           </header>
 
-          <div v-if="loading && !receivingItems.length" class="p-8 text-center text-sm text-slate-500">
+          <div v-if="loading && !receivingItems.length" class="empty-state">
+            <span class="spinner size-6 text-brand-600" aria-hidden="true" />
             Memuat daftar kegiatan...
           </div>
-          <div v-else-if="!receivingItems.length" class="p-8 text-center text-sm text-slate-500">
+          <div v-else-if="!receivingItems.length" class="empty-state">
             Tidak ada kegiatan receiving yang ditemukan.
           </div>
-          <div v-else class="divide-y divide-slate-100">
-            <article
+          <ul v-else class="max-h-[70vh] divide-y divide-slate-100 overflow-y-auto">
+            <li
               v-for="(vessel, index) in receivingItems"
               :key="vessel.id ?? `${vessel.noSpmk}-${index}`"
-              class="p-5 transition hover:bg-slate-50 sm:px-6"
+              class="border-l-4 px-5 py-4 transition sm:px-6"
+              :class="
+                activeVessel === vessel
+                  ? 'border-brand-600 bg-brand-50/60'
+                  : 'border-transparent hover:bg-slate-50'
+              "
             >
               <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                <dl class="grid min-w-0 flex-1 grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                  <div class="col-span-2">
-                    <dt class="text-xs font-medium text-slate-500">Nama Kapal</dt>
-                    <dd class="mt-0.5 font-semibold text-slate-900">{{ vessel.nmKapal || '-' }}</dd>
-                  </div>
-                  <div>
-                    <dt class="text-xs font-medium text-slate-500">No. PPK</dt>
-                    <dd class="mt-0.5 break-words text-slate-800">{{ vessel.noPpk || '-' }}</dd>
-                  </div>
-                  <div>
-                    <dt class="text-xs font-medium text-slate-500">No. PKK</dt>
-                    <dd class="mt-0.5 break-words text-slate-800">{{ vessel.noPkk || '-' }}</dd>
-                  </div>
-                  <div>
-                    <dt class="text-xs font-medium text-slate-500">No. SPMK</dt>
-                    <dd class="mt-0.5 break-words text-slate-800">{{ vessel.noSpmk || '-' }}</dd>
-                  </div>
-                  <div>
-                    <dt class="text-xs font-medium text-slate-500">Siklus</dt>
-                    <dd class="mt-0.5 text-slate-800">{{ vessel.siklus ?? '-' }}</dd>
-                  </div>
-                  <div class="col-span-2">
-                    <dt class="text-xs font-medium text-slate-500">Kegiatan</dt>
-                    <dd class="mt-0.5 text-slate-800">{{ vessel.nmKegiatan || '-' }}</dd>
-                  </div>
-                </dl>
+                <div class="min-w-0 flex-1">
+                  <p class="font-semibold text-slate-900">{{ vessel.nmKapal || '-' }}</p>
+                  <p class="mt-0.5 text-sm text-slate-500">{{ vessel.nmKegiatan || '-' }}</p>
+                  <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+                    <div>
+                      <dt class="meta-label">No. PPK</dt>
+                      <dd class="meta-value">{{ vessel.noPpk || '-' }}</dd>
+                    </div>
+                    <div>
+                      <dt class="meta-label">No. PKK</dt>
+                      <dd class="meta-value">{{ vessel.noPkk || '-' }}</dd>
+                    </div>
+                    <div>
+                      <dt class="meta-label">No. SPMK</dt>
+                      <dd class="meta-value">{{ vessel.noSpmk || '-' }}</dd>
+                    </div>
+                    <div>
+                      <dt class="meta-label">Siklus</dt>
+                      <dd class="meta-value">{{ vessel.siklus ?? '-' }}</dd>
+                    </div>
+                  </dl>
+                </div>
                 <button
                   type="button"
-                  class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800"
+                  class="btn shrink-0 px-4 py-2"
+                  :class="activeVessel === vessel ? 'btn-ghost' : 'btn-primary'"
                   @click="selectVessel(vessel)"
                 >
-                  Proses
+                  {{ activeVessel === vessel ? 'Dipilih' : 'Proses' }}
                 </button>
               </div>
-            </article>
-          </div>
+            </li>
+          </ul>
         </section>
 
-        <section
-          v-if="activeVessel"
-          class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200"
-        >
-          <header class="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
-            <h2 class="text-lg font-bold text-slate-900">Form Realisasi Receiving</h2>
-            <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+        <section v-if="activeVessel" class="card lg:sticky lg:top-24">
+          <header class="card-header bg-slate-50/70">
+            <h2 class="card-title">Form Realisasi Receiving</h2>
+            <dl class="mt-3 grid grid-cols-2 gap-3">
               <div>
-                <dt class="text-xs text-slate-500">Nama Kapal</dt>
-                <dd class="mt-0.5 font-semibold text-slate-800">{{ activeVessel.nmKapal || '-' }}</dd>
+                <dt class="meta-label">Nama Kapal</dt>
+                <dd class="meta-value font-semibold">{{ activeVessel.nmKapal || '-' }}</dd>
               </div>
               <div>
-                <dt class="text-xs text-slate-500">No. SPMK</dt>
-                <dd class="mt-0.5 font-semibold text-slate-800">{{ activeVessel.noSpmk || '-' }}</dd>
+                <dt class="meta-label">No. SPMK</dt>
+                <dd class="meta-value font-semibold">{{ activeVessel.noSpmk || '-' }}</dd>
               </div>
             </dl>
           </header>
 
           <form class="space-y-4 p-5 sm:p-6" @submit.prevent="submitReceiving">
-            <label class="block text-sm font-medium text-slate-700">
+            <label class="field-label">
               Nomor BL <span class="text-red-600">*</span>
-              <select
-                v-model="form.noBlAwb"
-                required
-                class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-              >
+              <select v-model="form.noBlAwb" required class="input">
                 <option disabled value="">Pilih Nomor BL</option>
                 <option v-for="barang in activeVessel.barang" :key="barang.noBlAwb" :value="barang.noBlAwb">
                   {{ barang.noBlAwb }} — {{ barang.mbrgNama || 'Nama barang tidak tersedia' }}
@@ -301,7 +296,7 @@ onMounted(loadReceiving)
             </label>
 
             <div class="grid grid-cols-2 gap-3">
-              <label class="block text-sm font-medium text-slate-700">
+              <label class="field-label">
                 Jumlah (Tonase) <span class="text-red-600">*</span>
                 <input
                   v-model.number="form.jumlah"
@@ -309,10 +304,10 @@ onMounted(loadReceiving)
                   min="0"
                   step="any"
                   required
-                  class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  class="input text-right tabular-nums"
                 />
               </label>
-              <label class="block text-sm font-medium text-slate-700">
+              <label class="field-label">
                 Colli <span class="text-red-600">*</span>
                 <input
                   v-model.number="form.colli"
@@ -320,28 +315,19 @@ onMounted(loadReceiving)
                   min="0"
                   step="1"
                   required
-                  class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  class="input text-right tabular-nums"
                 />
               </label>
             </div>
 
-            <label class="block text-sm font-medium text-slate-700">
+            <label class="field-label">
               Tanggal Realisasi <span class="text-red-600">*</span>
-              <input
-                v-model="form.tglRls"
-                type="datetime-local"
-                required
-                class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-              />
+              <input v-model="form.tglRls" type="datetime-local" required class="input" />
             </label>
 
-            <label class="block text-sm font-medium text-slate-700">
-              Gudang &amp; Blok
-              <select
-                v-model="form.gudangIndex"
-                required
-                class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-              >
+            <label class="field-label">
+              Gudang &amp; Blok <span class="text-red-600">*</span>
+              <select v-model="form.gudangIndex" required class="input">
                 <option disabled value="">Pilih Gudang &amp; Blok</option>
                 <option
                   v-for="(gudang, index) in activeVessel.gudang"
@@ -353,35 +339,32 @@ onMounted(loadReceiving)
               </select>
             </label>
 
-            <label class="block text-sm font-medium text-slate-700">
+            <label class="field-label">
               Keterangan
-              <textarea
-                v-model="form.keterangan"
-                rows="3"
-                class="mt-1 w-full resize-y rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-              />
+              <textarea v-model="form.keterangan" rows="3" class="input resize-y" />
             </label>
 
-            <button
-              :disabled="busy || !activeVessel.barang.length || !activeVessel.gudang.length"
-              class="w-full rounded-lg bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
-              {{ sending ? 'Mengirim...' : 'Kirim Realisasi' }}
-            </button>
             <p
               v-if="!activeVessel.barang.length || !activeVessel.gudang.length"
-              class="text-xs text-amber-700"
+              class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
             >
               Data BL atau gudang tidak tersedia untuk kegiatan ini.
             </p>
+            <button
+              :disabled="busy || !activeVessel.barang.length || !activeVessel.gudang.length"
+              class="btn btn-success w-full py-3"
+            >
+              <span v-if="sending" class="spinner" aria-hidden="true" />
+              {{ sending ? 'Mengirim...' : 'Kirim Realisasi' }}
+            </button>
           </form>
         </section>
 
         <aside
           v-else
-          class="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500"
+          class="empty-state rounded-2xl border-2 border-dashed border-slate-300 bg-white/50 lg:sticky lg:top-24"
         >
-          Pilih kegiatan dan tekan <strong>Proses</strong> untuk membuka form realisasi.
+          <p>Pilih kegiatan dan tekan <strong class="text-slate-700">Proses</strong> untuk membuka form realisasi.</p>
         </aside>
       </div>
     </div>

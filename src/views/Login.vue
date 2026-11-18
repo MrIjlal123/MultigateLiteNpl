@@ -43,14 +43,61 @@ async function login() {
 </script>
 
 <template>
-  <main class="grid min-h-screen place-items-center bg-slate-100 p-4">
-    <form class="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200" @submit.prevent="login">
-      <h1 class="text-2xl font-bold text-slate-900">Masuk ke Port Gate</h1>
-      <p class="mb-6 mt-1 text-sm text-slate-500">Gunakan akun operasional Anda.</p>
-      <p v-if="error" class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
-      <label class="mb-4 block text-sm font-medium text-slate-700">Username<input v-model.trim="username" required autocomplete="username" :disabled="loading" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" /></label>
-      <label class="block text-sm font-medium text-slate-700">Password<input v-model="password" required type="password" autocomplete="current-password" :disabled="loading" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" /></label>
-      <button :disabled="loading" class="mt-6 w-full rounded-lg bg-blue-700 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-400">{{ loading ? 'Memproses...' : 'Masuk' }}</button>
-    </form>
+  <main class="grid min-h-screen lg:grid-cols-2">
+    <section
+      class="relative hidden overflow-hidden bg-gradient-to-br from-brand-900 via-brand-700 to-sky-600 p-12 text-white lg:flex lg:flex-col lg:justify-between"
+    >
+      <div class="absolute -right-24 -top-24 size-96 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
+      <div class="absolute -bottom-32 -left-16 size-96 rounded-full bg-sky-300/20 blur-3xl" aria-hidden="true" />
+      <div class="relative flex items-center gap-3">
+        <span class="grid size-12 place-items-center rounded-xl bg-white p-1.5 shadow-lg">
+          <img src="/Logo-PTOSM.png" alt="" class="h-full w-full object-contain" />
+        </span>
+        <span class="text-lg font-semibold">Multigate NPL Lite</span>
+      </div>
+      <div class="relative max-w-md">
+        <h2 class="text-4xl font-bold leading-tight tracking-tight">Operasional pelabuhan dalam satu layar.</h2>
+        <p class="mt-4 text-base text-blue-100">
+          Gate In/Out, receiving, booking slot truk, dan verifikasi eBAST — terintegrasi dengan PTOSM.
+        </p>
+      </div>
+      <p class="relative text-xs text-blue-200">&copy; {{ new Date().getFullYear() }} PTOSM</p>
+    </section>
+
+    <section class="grid place-items-center p-6">
+      <form class="card w-full max-w-md p-8 sm:p-10" @submit.prevent="login">
+        <img src="/Logo-PTOSM.png" alt="PTOSM" class="mb-6 h-10 w-auto lg:hidden" />
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900">Selamat datang</h1>
+        <p class="mb-6 mt-1 text-sm text-slate-500">Masuk menggunakan akun operasional Anda.</p>
+        <p v-if="error" role="alert" class="alert-error mb-5">{{ error }}</p>
+        <label class="field-label mb-4">
+          Username
+          <input
+            v-model.trim="username"
+            required
+            autocomplete="username"
+            placeholder="nama.pengguna"
+            :disabled="loading"
+            class="input"
+          />
+        </label>
+        <label class="field-label">
+          Password
+          <input
+            v-model="password"
+            required
+            type="password"
+            autocomplete="current-password"
+            placeholder="••••••••"
+            :disabled="loading"
+            class="input"
+          />
+        </label>
+        <button :disabled="loading" class="btn btn-primary mt-7 w-full py-3">
+          <span v-if="loading" class="spinner" aria-hidden="true" />
+          {{ loading ? 'Memproses...' : 'Masuk' }}
+        </button>
+      </form>
+    </section>
   </main>
 </template>

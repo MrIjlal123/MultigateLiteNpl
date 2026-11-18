@@ -176,168 +176,148 @@ onMounted(loadVessels)
 </script>
 
 <template>
-  <main class="min-h-[calc(100vh-4rem)] bg-slate-100 p-4 sm:p-6">
-    <div class="mx-auto max-w-7xl">
-      <div class="mb-6">
-        <p class="text-sm font-semibold uppercase tracking-wide text-blue-700">Operasional Pelabuhan</p>
-        <h1 class="mt-1 text-2xl font-bold text-slate-900">Booking Slot</h1>
-        <p class="mt-1 text-sm text-slate-500">Atur jadwal dan kuota truk untuk kegiatan vessel delivery.</p>
+  <main class="page">
+    <div class="mx-auto max-w-7xl space-y-6">
+      <div>
+        <p class="page-eyebrow">Operasional Pelabuhan</p>
+        <h1 class="page-title">Booking Slot</h1>
+        <p class="page-subtitle">Atur jadwal dan kuota truk untuk kegiatan vessel delivery.</p>
       </div>
 
-      <p v-if="success" role="status" class="mb-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
-        {{ success }}
-      </p>
-      <p v-if="error" role="alert" class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-        {{ error }}
-      </p>
+      <p v-if="success" role="status" class="alert-success">{{ success }}</p>
+      <p v-if="error" role="alert" class="alert-error">{{ error }}</p>
 
       <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
-        <section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-          <header class="border-b border-slate-200 px-5 py-4 sm:px-6">
-            <h2 class="text-lg font-bold text-slate-900">Daftar Kegiatan Vessel Delivery</h2>
-            <p class="mt-1 text-sm text-slate-500">Cari kegiatan berdasarkan nomor PKK.</p>
+        <section class="card">
+          <header class="card-header">
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="card-title">Kegiatan Vessel Delivery</h2>
+              <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+                {{ vessels.length }} data
+              </span>
+            </div>
             <form class="mt-4 flex gap-2" @submit.prevent="loadVessels">
               <input
                 v-model="noPkkSearch"
                 type="search"
-                placeholder="No. PKK"
+                placeholder="Cari No. PKK"
                 aria-label="Cari berdasarkan No. PKK"
-                class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                class="input mt-0 min-w-0 flex-1"
               />
-              <button
-                type="submit"
-                :disabled="busy()"
-                class="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-              >
-                {{ loading ? 'Memuat...' : 'Cari' }}
+              <button type="submit" :disabled="busy()" class="btn btn-primary px-5">
+                <span v-if="loading" class="spinner" aria-hidden="true" />
+                {{ loading ? 'Memuat' : 'Cari' }}
               </button>
             </form>
           </header>
 
-          <div v-if="loading && !vessels.length" class="p-8 text-center text-sm text-slate-500">
+          <div v-if="loading && !vessels.length" class="empty-state">
+            <span class="spinner size-6 text-brand-600" aria-hidden="true" />
             Memuat daftar kegiatan...
           </div>
-          <div v-else-if="!vessels.length" class="p-8 text-center text-sm text-slate-500">
+          <div v-else-if="!vessels.length" class="empty-state">
             Tidak ada kegiatan vessel delivery yang ditemukan.
           </div>
-          <div v-else class="divide-y divide-slate-100">
-            <article
+          <ul v-else class="max-h-[70vh] divide-y divide-slate-100 overflow-y-auto">
+            <li
               v-for="(vessel, index) in vessels"
               :key="vessel.id ?? `${vessel.noSpmk}-${index}`"
-              class="p-5 transition hover:bg-slate-50 sm:px-6"
+              class="border-l-4 px-5 py-4 transition sm:px-6"
+              :class="
+                activeVessel === vessel
+                  ? 'border-brand-600 bg-brand-50/60'
+                  : 'border-transparent hover:bg-slate-50'
+              "
             >
               <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                <dl class="grid min-w-0 flex-1 grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                  <div class="col-span-2">
-                    <dt class="text-xs font-medium text-slate-500">Nama Kapal</dt>
-                    <dd class="mt-0.5 font-semibold text-slate-900">{{ vessel.nmKapal || '-' }}</dd>
-                  </div>
-                  <div>
-                    <dt class="text-xs font-medium text-slate-500">No. PPK</dt>
-                    <dd class="mt-0.5 break-words text-slate-800">{{ vessel.noPpk || '-' }}</dd>
-                  </div>
-                  <div>
-                    <dt class="text-xs font-medium text-slate-500">No. PKK</dt>
-                    <dd class="mt-0.5 break-words text-slate-800">{{ vesselBookingPkk(vessel) || '-' }}</dd>
-                  </div>
-                  <div>
-                    <dt class="text-xs font-medium text-slate-500">No. SPMK</dt>
-                    <dd class="mt-0.5 break-words text-slate-800">{{ vessel.noSpmk || '-' }}</dd>
-                  </div>
-                  <div class="col-span-2">
-                    <dt class="text-xs font-medium text-slate-500">Kegiatan</dt>
-                    <dd class="mt-0.5 text-slate-800">{{ vessel.nmKegiatan || '-' }}</dd>
-                  </div>
-                </dl>
+                <div class="min-w-0 flex-1">
+                  <p class="font-semibold text-slate-900">{{ vessel.nmKapal || '-' }}</p>
+                  <p class="mt-0.5 text-sm text-slate-500">{{ vessel.nmKegiatan || '-' }}</p>
+                  <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
+                    <div>
+                      <dt class="meta-label">No. PPK</dt>
+                      <dd class="meta-value">{{ vessel.noPpk || '-' }}</dd>
+                    </div>
+                    <div>
+                      <dt class="meta-label">No. PKK</dt>
+                      <dd class="meta-value">{{ vesselBookingPkk(vessel) || '-' }}</dd>
+                    </div>
+                    <div>
+                      <dt class="meta-label">No. SPMK</dt>
+                      <dd class="meta-value">{{ vessel.noSpmk || '-' }}</dd>
+                    </div>
+                  </dl>
+                </div>
                 <button
                   type="button"
                   :disabled="busy()"
-                  class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                  class="btn shrink-0 px-4 py-2"
+                  :class="activeVessel === vessel ? 'btn-ghost' : 'btn-primary'"
                   @click="selectVessel(vessel)"
                 >
-                  Proses
+                  {{ activeVessel === vessel ? 'Dipilih' : 'Proses' }}
                 </button>
               </div>
-            </article>
-          </div>
+            </li>
+          </ul>
         </section>
 
-        <section
-          v-if="activeVessel"
-          class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200"
-        >
-          <header class="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
-            <h2 class="text-lg font-bold text-slate-900">Form Booking Slot</h2>
-            <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+        <section v-if="activeVessel" class="card lg:sticky lg:top-24">
+          <header class="card-header bg-slate-50/70">
+            <h2 class="card-title">Form Booking Slot</h2>
+            <dl class="mt-3 grid grid-cols-2 gap-3">
               <div class="col-span-2">
-                <dt class="text-xs text-slate-500">Nama Kapal</dt>
-                <dd class="mt-0.5 font-semibold text-slate-800">{{ activeVessel.nmKapal || '-' }}</dd>
+                <dt class="meta-label">Nama Kapal</dt>
+                <dd class="meta-value font-semibold">{{ activeVessel.nmKapal || '-' }}</dd>
               </div>
               <div>
-                <dt class="text-xs text-slate-500">No. PKK</dt>
-                <dd class="mt-0.5 font-semibold text-slate-800">{{ vesselBookingPkk(activeVessel) || '-' }}</dd>
+                <dt class="meta-label">No. PKK</dt>
+                <dd class="meta-value font-semibold">{{ vesselBookingPkk(activeVessel) || '-' }}</dd>
               </div>
               <div>
-                <dt class="text-xs text-slate-500">No. SPMK</dt>
-                <dd class="mt-0.5 font-semibold text-slate-800">{{ activeVessel.noSpmk || '-' }}</dd>
+                <dt class="meta-label">No. SPMK</dt>
+                <dd class="meta-value font-semibold">{{ activeVessel.noSpmk || '-' }}</dd>
               </div>
             </dl>
           </header>
 
-          <form class="space-y-4 p-5 sm:p-6" @submit.prevent="submitBooking">
+          <form class="space-y-5 p-5 sm:p-6" @submit.prevent="submitBooking">
             <fieldset :disabled="busy()" class="space-y-4 disabled:opacity-70">
-              <label class="block text-sm font-medium text-slate-700">
-                Tanggal Awal Kegiatan <span class="text-red-600">*</span>
-                <input
-                  v-model="form.startDate"
-                  type="datetime-local"
-                  class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
+              <div class="grid gap-3 sm:grid-cols-2">
+                <label class="field-label">
+                  Tanggal Awal <span class="text-red-600">*</span>
+                  <input v-model="form.startDate" type="datetime-local" class="input" />
+                </label>
+                <label class="field-label">
+                  Tanggal Akhir <span class="text-red-600">*</span>
+                  <input v-model="form.endDate" type="datetime-local" class="input" />
+                </label>
+              </div>
 
-              <label class="block text-sm font-medium text-slate-700">
-                Tanggal Akhir Kegiatan <span class="text-red-600">*</span>
-                <input
-                  v-model="form.endDate"
-                  type="datetime-local"
-                  class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
+              <div class="grid gap-3 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+                <label class="field-label">
+                  Kode Pelanggan <span class="text-red-600">*</span>
+                  <input v-model="form.customerCode" type="text" class="input" />
+                </label>
+                <label class="field-label">
+                  Nama Pelanggan <span class="text-red-600">*</span>
+                  <input v-model="form.customerName" type="text" class="input" />
+                </label>
+              </div>
 
-              <label class="block text-sm font-medium text-slate-700">
-                Kode Pelanggan <span class="text-red-600">*</span>
-                <input
-                  v-model="form.customerCode"
-                  type="text"
-                  class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
-
-              <label class="block text-sm font-medium text-slate-700">
-                Nama Pelanggan <span class="text-red-600">*</span>
-                <input
-                  v-model="form.customerName"
-                  type="text"
-                  class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
-
-              <label class="block text-sm font-medium text-slate-700">
+              <label class="field-label">
                 Kuota Truk <span class="text-red-600">*</span>
                 <input
                   v-model.number="form.kuotaTruck"
                   type="number"
                   step="1"
-                  class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  class="input text-right tabular-nums"
                 />
               </label>
             </fieldset>
 
-            <button
-              type="submit"
-              :disabled="busy()"
-              class="w-full rounded-lg bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
+            <button type="submit" :disabled="busy()" class="btn btn-success w-full py-3">
+              <span v-if="sending" class="spinner" aria-hidden="true" />
               {{ sending ? 'Mengirim...' : 'Kirim Jadwal Truk' }}
             </button>
           </form>
@@ -345,9 +325,9 @@ onMounted(loadVessels)
 
         <aside
           v-else
-          class="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500"
+          class="empty-state rounded-2xl border-2 border-dashed border-slate-300 bg-white/50 lg:sticky lg:top-24"
         >
-          Pilih kegiatan dan tekan <strong>Proses</strong> untuk membuka form booking slot.
+          <p>Pilih kegiatan dan tekan <strong class="text-slate-700">Proses</strong> untuk membuka form booking slot.</p>
         </aside>
       </div>
     </div>

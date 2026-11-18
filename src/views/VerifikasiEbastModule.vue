@@ -144,153 +144,136 @@ onMounted(loadEbast)
 </script>
 
 <template>
-  <main class="min-h-[calc(100vh-4rem)] bg-slate-100 p-4 sm:p-6">
-    <div class="mx-auto max-w-7xl">
-      <div class="mb-6">
-        <p class="text-sm font-semibold uppercase tracking-wide text-blue-700">Operasional Pelabuhan</p>
-        <h1 class="mt-1 text-2xl font-bold text-slate-900">Verifikasi eBAST</h1>
-        <p class="mt-1 text-sm text-slate-500">Tinjau detail eBAST dan status persetujuannya.</p>
+  <main class="page">
+    <div class="mx-auto max-w-7xl space-y-6">
+      <div>
+        <p class="page-eyebrow">Operasional Pelabuhan</p>
+        <h1 class="page-title">Verifikasi eBAST</h1>
+        <p class="page-subtitle">Tinjau detail eBAST dan status persetujuannya.</p>
       </div>
 
-      <p v-if="error" role="alert" class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-        {{ error }}
-      </p>
+      <p v-if="error" role="alert" class="alert-error">{{ error }}</p>
 
       <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
-        <section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-          <header class="border-b border-slate-200 px-5 py-4 sm:px-6">
-            <h2 class="text-lg font-bold text-slate-900">Daftar eBAST</h2>
-            <p class="mt-1 text-sm text-slate-500">Cari dokumen berdasarkan nomor BAST.</p>
+        <section class="card">
+          <header class="card-header">
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="card-title">Daftar eBAST</h2>
+              <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+                {{ ebastItems.length }} data
+              </span>
+            </div>
             <form class="mt-4 flex gap-2" @submit.prevent="loadEbast">
               <input
                 v-model="noBastSearch"
                 type="search"
-                placeholder="No. BAST"
+                placeholder="Cari No. BAST"
                 aria-label="Cari berdasarkan No. BAST"
-                class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                class="input mt-0 min-w-0 flex-1"
               />
-              <button
-                type="submit"
-                :disabled="loading"
-                class="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-              >
-                {{ loading ? 'Memuat...' : 'Cari' }}
+              <button type="submit" :disabled="loading" class="btn btn-primary px-5">
+                <span v-if="loading" class="spinner" aria-hidden="true" />
+                {{ loading ? 'Memuat' : 'Cari' }}
               </button>
             </form>
           </header>
 
-          <div v-if="loading && !ebastItems.length" class="p-8 text-center text-sm text-slate-500">
+          <div v-if="loading && !ebastItems.length" class="empty-state">
+            <span class="spinner size-6 text-brand-600" aria-hidden="true" />
             Memuat daftar eBAST...
           </div>
-          <div v-else-if="!ebastItems.length" class="p-8 text-center text-sm text-slate-500">
-            Tidak ada eBAST yang ditemukan.
-          </div>
-          <div v-else class="max-h-[70vh] divide-y divide-slate-100 overflow-y-auto">
-            <article
-              v-for="(item, index) in ebastItems"
-              :key="item.id ?? `${item.noBast}-${index}`"
-              class="p-5 transition hover:bg-slate-50 sm:px-6"
-              :class="{ 'bg-blue-50/60': selectedEbast === item }"
-            >
-              <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                <dl class="grid min-w-0 flex-1 grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                  <div class="col-span-2">
-                    <dt class="text-xs font-medium text-slate-500">No. BAST</dt>
-                    <dd class="mt-0.5 break-words font-semibold text-slate-900">{{ item.noBast || '-' }}</dd>
-                  </div>
-                  <div class="col-span-2">
-                    <dt class="text-xs font-medium text-slate-500">Nama Kapal</dt>
-                    <dd class="mt-0.5 text-slate-800">{{ item.nmKapal || '-' }}</dd>
-                  </div>
-                  <div>
-                    <dt class="text-xs font-medium text-slate-500">Tanggal BAST</dt>
-                    <dd class="mt-0.5 text-slate-800">{{ formatDate(item.tglBast) }}</dd>
-                  </div>
-                  <div>
-                    <dt class="text-xs font-medium text-slate-500">Status</dt>
-                    <dd class="mt-1">
-                      <span class="rounded-full px-2.5 py-1 text-xs font-semibold" :class="statusClass(item.status)">
-                        {{ statusLabel(item.status) }}
-                      </span>
-                    </dd>
-                  </div>
-                </dl>
-                <button
-                  type="button"
-                  class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800"
-                  @click="selectEbast(item)"
-                >
-                  Lihat Detail
-                </button>
-              </div>
-            </article>
-          </div>
+          <div v-else-if="!ebastItems.length" class="empty-state">Tidak ada eBAST yang ditemukan.</div>
+          <ul v-else class="max-h-[70vh] divide-y divide-slate-100 overflow-y-auto">
+            <li v-for="(item, index) in ebastItems" :key="item.id ?? `${item.noBast}-${index}`">
+              <button
+                type="button"
+                class="block w-full border-l-4 px-5 py-4 text-left transition sm:px-6"
+                :class="
+                  selectedEbast === item
+                    ? 'border-brand-600 bg-brand-50/60'
+                    : 'border-transparent hover:bg-slate-50'
+                "
+                @click="selectEbast(item)"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <p class="min-w-0 break-words font-semibold text-slate-900">{{ item.noBast || '-' }}</p>
+                  <span
+                    class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                    :class="statusClass(item.status)"
+                  >
+                    {{ statusLabel(item.status) }}
+                  </span>
+                </div>
+                <p class="mt-1 text-sm text-slate-600">{{ item.nmKapal || '-' }}</p>
+                <p class="mt-1 text-xs text-slate-400">{{ formatDate(item.tglBast) }}</p>
+              </button>
+            </li>
+          </ul>
         </section>
 
-        <section
-          v-if="selectedEbast"
-          class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200"
-        >
-          <header class="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
-            <h2 class="text-lg font-bold text-slate-900">Detail eBAST &amp; Verifikasi</h2>
-            <dl class="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3">
+        <section v-if="selectedEbast" class="card">
+          <header class="card-header bg-slate-50/70">
+            <div class="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <dt class="text-xs font-medium text-slate-500">No. BAST</dt>
-                <dd class="mt-1 break-words text-sm font-semibold text-slate-900">{{ selectedEbast.noBast || '-' }}</dd>
+                <p class="meta-label">No. BAST</p>
+                <h2 class="mt-0.5 break-words text-lg font-bold text-slate-900">{{ selectedEbast.noBast || '-' }}</h2>
+                <p class="mt-1 text-sm text-slate-500">
+                  {{ selectedEbast.nmKapal || '-' }} · Voyage {{ selectedEbast.voyage || '-' }} ·
+                  {{ formatDate(selectedEbast.tglBast) }}
+                </p>
               </div>
-              <div>
-                <dt class="text-xs font-medium text-slate-500">Tanggal</dt>
-                <dd class="mt-1 text-sm text-slate-800">{{ formatDate(selectedEbast.tglBast) }}</dd>
+              <span class="rounded-full px-3 py-1 text-xs font-semibold" :class="statusClass(selectedEbast.status)">
+                {{ statusLabel(selectedEbast.status) }}
+              </span>
+            </div>
+            <dl class="mt-4 grid grid-cols-3 gap-3">
+              <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                <dt class="meta-label">Total BL</dt>
+                <dd class="mt-1 text-lg font-bold tabular-nums text-slate-900">{{ displayValue(selectedEbast.totalBl) }}</dd>
               </div>
-              <div>
-                <dt class="text-xs font-medium text-slate-500">Kapal</dt>
-                <dd class="mt-1 text-sm text-slate-800">{{ selectedEbast.nmKapal || '-' }}</dd>
+              <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                <dt class="meta-label">Total WB</dt>
+                <dd class="mt-1 text-lg font-bold tabular-nums text-slate-900">{{ displayValue(selectedEbast.totalWb) }}</dd>
               </div>
-              <div>
-                <dt class="text-xs font-medium text-slate-500">Voyage</dt>
-                <dd class="mt-1 text-sm text-slate-800">{{ selectedEbast.voyage || '-' }}</dd>
-              </div>
-              <div>
-                <dt class="text-xs font-medium text-slate-500">Total BL</dt>
-                <dd class="mt-1 text-sm text-slate-800">{{ displayValue(selectedEbast.totalBl) }}</dd>
-              </div>
-              <div>
-                <dt class="text-xs font-medium text-slate-500">Total WB</dt>
-                <dd class="mt-1 text-sm text-slate-800">{{ displayValue(selectedEbast.totalWb) }}</dd>
-              </div>
-              <div>
-                <dt class="text-xs font-medium text-slate-500">Total Short/Over</dt>
-                <dd class="mt-1 text-sm text-slate-800">{{ displayValue(selectedEbast.totalShortOver) }}</dd>
+              <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                <dt class="meta-label">Short/Over</dt>
+                <dd class="mt-1 text-lg font-bold tabular-nums text-slate-900">
+                  {{ displayValue(selectedEbast.totalShortOver) }}
+                </dd>
               </div>
             </dl>
           </header>
 
           <div class="space-y-6 p-5 sm:p-6">
             <section>
-              <h3 class="mb-3 text-sm font-bold text-slate-900">Detail Barang</h3>
-              <div class="overflow-x-auto rounded-lg border border-slate-200">
+              <h3 class="mb-3 text-sm font-semibold text-slate-900">Detail Barang</h3>
+              <div class="overflow-x-auto rounded-xl border border-slate-200">
                 <table class="w-full min-w-[680px] text-left text-sm">
-                  <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500">
                     <tr>
-                      <th class="px-3 py-3 font-semibold">Consignee</th>
-                      <th class="px-3 py-3 font-semibold">No. BL</th>
-                      <th class="px-3 py-3 text-right font-semibold">Tonase BL</th>
-                      <th class="px-3 py-3 text-right font-semibold">Tonase WB</th>
-                      <th class="px-3 py-3 text-right font-semibold">Short/Over</th>
-                      <th class="px-3 py-3 text-right font-semibold">Colli</th>
+                      <th class="px-4 py-3 font-semibold">Consignee</th>
+                      <th class="px-4 py-3 font-semibold">No. BL</th>
+                      <th class="px-4 py-3 text-right font-semibold">Tonase BL</th>
+                      <th class="px-4 py-3 text-right font-semibold">Tonase WB</th>
+                      <th class="px-4 py-3 text-right font-semibold">Short/Over</th>
+                      <th class="px-4 py-3 text-right font-semibold">Colli</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-100">
-                    <tr v-for="(detail, index) in selectedEbast.detail ?? []" :key="detail.noSeq ?? index">
-                      <td class="px-3 py-3 text-slate-800">{{ detail.consigne || detail.consignee || '-' }}</td>
-                      <td class="px-3 py-3 text-slate-800">{{ detail.noBl || '-' }}</td>
-                      <td class="px-3 py-3 text-right text-slate-800">{{ displayValue(detail.tonaseBl) }}</td>
-                      <td class="px-3 py-3 text-right text-slate-800">{{ displayValue(detail.tonaseWb) }}</td>
-                      <td class="px-3 py-3 text-right text-slate-800">{{ displayValue(detail.shortOver) }}</td>
-                      <td class="px-3 py-3 text-right text-slate-800">{{ displayValue(detail.colli) }}</td>
+                    <tr
+                      v-for="(detail, index) in selectedEbast.detail ?? []"
+                      :key="detail.noSeq ?? index"
+                      class="hover:bg-slate-50/70"
+                    >
+                      <td class="px-4 py-3 text-slate-800">{{ detail.consigne || detail.consignee || '-' }}</td>
+                      <td class="px-4 py-3 font-medium text-slate-800">{{ detail.noBl || '-' }}</td>
+                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">{{ displayValue(detail.tonaseBl) }}</td>
+                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">{{ displayValue(detail.tonaseWb) }}</td>
+                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">{{ displayValue(detail.shortOver) }}</td>
+                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">{{ displayValue(detail.colli) }}</td>
                     </tr>
                     <tr v-if="!selectedEbast.detail?.length">
-                      <td colspan="6" class="px-3 py-5 text-center text-slate-500">Tidak ada detail barang.</td>
+                      <td colspan="6" class="px-4 py-6 text-center text-slate-500">Tidak ada detail barang.</td>
                     </tr>
                   </tbody>
                 </table>
@@ -298,58 +281,50 @@ onMounted(loadEbast)
             </section>
 
             <section>
-              <h3 class="mb-3 text-sm font-bold text-slate-900">Status Approval</h3>
-              <div class="overflow-x-auto rounded-lg border border-slate-200">
-                <table class="w-full min-w-[520px] text-left text-sm">
-                  <thead class="bg-slate-50 text-xs uppercase text-slate-500">
-                    <tr>
-                      <th class="px-3 py-3 font-semibold">Level</th>
-                      <th class="px-3 py-3 font-semibold">Nama</th>
-                      <th class="px-3 py-3 font-semibold">Jabatan</th>
-                      <th class="px-3 py-3 font-semibold">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100">
-                    <tr
-                      v-for="(approval, index) in selectedEbast.approval ?? []"
-                      :key="`${approval.levelApprove ?? index}-${approval.nama ?? ''}`"
-                    >
-                      <td class="px-3 py-3 text-slate-800">{{ displayValue(approval.levelApprove) }}</td>
-                      <td class="px-3 py-3 text-slate-800">{{ approval.nama || '-' }}</td>
-                      <td class="px-3 py-3 text-slate-800">{{ approval.jabatan || '-' }}</td>
-                      <td class="px-3 py-3 text-slate-800">{{ statusLabel(approval.statusApprove) }}</td>
-                    </tr>
-                    <tr v-if="!selectedEbast.approval?.length">
-                      <td colspan="4" class="px-3 py-5 text-center text-slate-500">Belum ada data approval.</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <h3 class="mb-3 text-sm font-semibold text-slate-900">Status Approval</h3>
+              <ol v-if="selectedEbast.approval?.length" class="space-y-2">
+                <li
+                  v-for="(approval, index) in selectedEbast.approval"
+                  :key="`${approval.levelApprove ?? index}-${approval.nama ?? ''}`"
+                  class="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3"
+                >
+                  <span
+                    class="grid size-8 shrink-0 place-items-center rounded-full bg-slate-100 text-xs font-bold text-slate-600"
+                  >
+                    {{ displayValue(approval.levelApprove) }}
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-semibold text-slate-900">{{ approval.nama || '-' }}</p>
+                    <p class="truncate text-xs text-slate-500">{{ approval.jabatan || '-' }}</p>
+                  </div>
+                  <span
+                    class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                    :class="statusClass(approval.statusApprove)"
+                  >
+                    {{ statusLabel(approval.statusApprove) }}
+                  </span>
+                </li>
+              </ol>
+              <p v-else class="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500">
+                Belum ada data approval.
+              </p>
             </section>
 
-            <section class="border-t border-slate-200 pt-5">
-              <label class="block text-sm font-medium text-slate-700">
+            <section class="border-t border-slate-100 pt-6">
+              <label class="field-label">
                 Catatan / Keterangan Reject
                 <textarea
                   v-model="note"
                   rows="3"
                   placeholder="Opsional — isi alasan jika eBAST ditolak"
-                  class="mt-1 w-full resize-y rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  class="input resize-y"
                 />
               </label>
               <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  class="rounded-lg bg-emerald-600 px-4 py-3 text-base font-bold text-white transition hover:bg-emerald-700"
-                  @click="handleApprove"
-                >
+                <button type="button" class="btn btn-success py-3 text-base" @click="handleApprove">
                   Setuju (Approve)
                 </button>
-                <button
-                  type="button"
-                  class="rounded-lg bg-red-600 px-4 py-3 text-base font-bold text-white transition hover:bg-red-700"
-                  @click="handleReject"
-                >
+                <button type="button" class="btn btn-danger py-3 text-base" @click="handleReject">
                   Tolak (Reject)
                 </button>
               </div>
@@ -359,9 +334,9 @@ onMounted(loadEbast)
 
         <aside
           v-else
-          class="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500"
+          class="empty-state rounded-2xl border-2 border-dashed border-slate-300 bg-white/50"
         >
-          Pilih eBAST dan tekan <strong>Lihat Detail</strong> untuk membuka data verifikasi.
+          <p>Pilih eBAST dari daftar untuk membuka data verifikasi.</p>
         </aside>
       </div>
     </div>

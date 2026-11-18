@@ -208,117 +208,123 @@ function numberOnly(event: KeyboardEvent) {
 </script>
 
 <template>
-  <main class="min-h-[calc(100vh-4rem)] bg-slate-100 p-4 sm:p-8">
-    <section
-      class="mx-auto max-w-5xl overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200"
-    >
-      <header class="bg-blue-700 px-6 py-5 text-white">
-        <h1 class="text-xl font-bold">Port Gate Operation</h1>
-        <p class="text-sm text-blue-100">Pencatatan transaksi Gate In &amp; Gate Out</p>
-      </header>
+  <main class="page">
+    <div class="mx-auto max-w-5xl space-y-6">
+      <div>
+        <p class="page-eyebrow">Operasional Pelabuhan</p>
+        <h1 class="page-title">Gate Operation</h1>
+        <p class="page-subtitle">Pencatatan transaksi Gate In &amp; Gate Out berdasarkan Job Order.</p>
+      </div>
 
-      <div class="space-y-6 p-5 sm:p-7">
-        <p
-          v-if="success"
-          role="status"
-          class="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700"
-        >
-          {{ success }}
-        </p>
-        <p v-if="error" role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-          {{ error }}
-        </p>
+      <p v-if="success" role="status" class="alert-success">{{ success }}</p>
+      <p v-if="error" role="alert" class="alert-error">{{ error }}</p>
 
-        <section class="rounded-xl border border-slate-200 p-5">
-          <div class="mb-4">
-            <h2 class="font-bold text-slate-900">Cari Job Order</h2>
-            <p class="mt-1 text-sm text-slate-500">Masukkan nomor Job Order untuk memuat data transaksi.</p>
+      <section class="card">
+        <div class="card-header flex items-center gap-3">
+          <span class="grid size-8 place-items-center rounded-full bg-brand-600 text-sm font-bold text-white">1</span>
+          <div>
+            <h2 class="card-title">Cari Job Order</h2>
+            <p class="text-sm text-slate-500">Masukkan nomor Job Order untuk memuat data transaksi.</p>
           </div>
-          <form class="flex flex-col gap-3 sm:flex-row" @submit.prevent="lookup">
+        </div>
+        <form class="flex flex-col gap-3 p-5 sm:flex-row sm:p-6" @submit.prevent="lookup">
+          <div class="relative min-w-0 flex-1">
+            <svg
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              class="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z"
+                clip-rule="evenodd"
+              />
+            </svg>
             <input
               id="no-job"
               v-model.trim="noJob"
               :disabled="busy"
               required
-              class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
+              aria-label="Nomor Job Order"
+              class="input mt-0 pl-10"
               placeholder="Nomor Job Order"
             />
-            <button
-              :disabled="busy"
-              class="rounded-lg bg-blue-700 px-5 py-2.5 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
-              {{ loading ? 'Memuat...' : 'Cari Job' }}
-            </button>
-          </form>
-        </section>
-
-        <section v-if="job" class="rounded-xl border border-slate-200 p-5">
-          <div class="mb-4">
-            <h2 class="font-bold text-slate-900">Ringkasan Data Kendaraan / Kapal</h2>
-            <p class="mt-1 text-sm text-slate-500">Data berikut berasal dari Job Order yang ditemukan.</p>
           </div>
-          <dl class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <div
-              v-for="item in jobSummary"
-              :key="item.label"
-              class="rounded-lg bg-slate-50 px-4 py-3"
-            >
-              <dt class="text-xs font-medium text-slate-500">{{ item.label }}</dt>
-              <dd class="mt-1 break-words text-sm font-semibold text-slate-900">
-                {{ item.value }}
-              </dd>
-            </div>
-          </dl>
-        </section>
+          <button :disabled="busy" class="btn btn-primary px-6">
+            <span v-if="loading" class="spinner" aria-hidden="true" />
+            {{ loading ? 'Memuat...' : 'Cari Job' }}
+          </button>
+        </form>
+      </section>
 
-        <section v-if="job" class="rounded-xl border border-slate-200 p-5">
-          <div class="mb-5">
-            <h2 class="font-bold text-slate-900">Data Transaksi Gate Terpadu</h2>
-            <p class="mt-1 text-sm text-slate-500">
-              Lengkapi data Gate In dan Gate Out sebelum mengirim transaksi.
-            </p>
+      <section v-if="job" class="card">
+        <div class="card-header flex items-center gap-3">
+          <span class="grid size-8 place-items-center rounded-full bg-brand-600 text-sm font-bold text-white">2</span>
+          <div>
+            <h2 class="card-title">Ringkasan Kendaraan / Kapal</h2>
+            <p class="text-sm text-slate-500">Data dari Job Order yang ditemukan.</p>
           </div>
+        </div>
+        <dl class="grid gap-3 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-3">
+          <div
+            v-for="item in jobSummary"
+            :key="item.label"
+            class="rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-3"
+          >
+            <dt class="meta-label">{{ item.label }}</dt>
+            <dd class="mt-1 break-words text-sm font-semibold text-slate-900">{{ item.value }}</dd>
+          </div>
+        </dl>
+      </section>
 
-          <form class="space-y-5" @submit.prevent="submit">
-            <fieldset :disabled="busy" class="grid gap-5 md:grid-cols-2">
-              <section class="space-y-4 rounded-lg bg-blue-50/70 p-4">
-                <h3 class="font-semibold text-blue-900">Gate In</h3>
-                <label class="block text-sm font-medium text-slate-700">
-                  Tanggal In
-                  <input
-                    v-model="gateInDate"
-                    type="datetime-local"
-                    required
-                    class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                  />
-                </label>
-                <label class="block text-sm font-medium text-slate-700">
-                  Berat In (kg)
-                  <input
-                    ref="gateInWeightInput"
-                    v-model="beratIn"
-                    @keydown="numberOnly"
-                    type="number"
-                    min="0"
-                    step="any"
-                    required
-                    class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                  />
-                </label>
-              </section>
+      <section v-if="job" class="card">
+        <div class="card-header flex items-center gap-3">
+          <span class="grid size-8 place-items-center rounded-full bg-brand-600 text-sm font-bold text-white">3</span>
+          <div>
+            <h2 class="card-title">Data Transaksi Gate</h2>
+            <p class="text-sm text-slate-500">Lengkapi data Gate In dan Gate Out sebelum mengirim.</p>
+          </div>
+        </div>
 
-              <section class="space-y-4 rounded-lg bg-emerald-50/70 p-4">
-                <h3 class="font-semibold text-emerald-900">Gate Out</h3>
-                <label class="block text-sm font-medium text-slate-700">
-                  Tanggal Out
-                  <input
-                    v-model="gateOutDate"
-                    type="datetime-local"
-                    required
-                    class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                  />
-                </label>
-                <label class="block text-sm font-medium text-slate-700">
+        <form class="space-y-6 p-5 sm:p-6" @submit.prevent="submit">
+          <fieldset :disabled="busy" class="grid gap-5 md:grid-cols-2">
+            <section class="space-y-4 rounded-xl border border-brand-100 bg-brand-50/60 p-5">
+              <h3 class="flex items-center gap-2 text-sm font-semibold text-brand-900">
+                <span class="size-2 rounded-full bg-brand-600" aria-hidden="true" />
+                Gate In
+              </h3>
+              <label class="field-label">
+                Tanggal In
+                <input v-model="gateInDate" type="datetime-local" required class="input" />
+              </label>
+              <label class="field-label">
+                Berat In (kg)
+                <input
+                  ref="gateInWeightInput"
+                  v-model="beratIn"
+                  @keydown="numberOnly"
+                  type="number"
+                  min="0"
+                  step="any"
+                  required
+                  placeholder="0"
+                  class="input text-right tabular-nums"
+                />
+              </label>
+            </section>
+
+            <section class="space-y-4 rounded-xl border border-emerald-100 bg-emerald-50/60 p-5">
+              <h3 class="flex items-center gap-2 text-sm font-semibold text-emerald-900">
+                <span class="size-2 rounded-full bg-emerald-600" aria-hidden="true" />
+                Gate Out
+              </h3>
+              <label class="field-label">
+                Tanggal Out
+                <input v-model="gateOutDate" type="datetime-local" required class="input" />
+              </label>
+              <div class="grid grid-cols-2 gap-3">
+                <label class="field-label">
                   Berat Out (kg)
                   <input
                     v-model="beratOut"
@@ -327,10 +333,11 @@ function numberOnly(event: KeyboardEvent) {
                     min="0"
                     step="any"
                     required
-                    class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                    placeholder="0"
+                    class="input text-right tabular-nums"
                   />
                 </label>
-                <label class="block text-sm font-medium text-slate-700">
+                <label class="field-label">
                   Colli
                   <input
                     v-model.number="colli"
@@ -339,36 +346,29 @@ function numberOnly(event: KeyboardEvent) {
                     min="0"
                     step="1"
                     required
-                    class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                    class="input text-right tabular-nums"
                   />
                 </label>
-              </section>
-            </fieldset>
+              </div>
+            </section>
+          </fieldset>
 
-            <div class="flex flex-col gap-4 border-t border-slate-200 pt-5 sm:flex-row sm:items-center">
-              <p class="flex-1 rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-700">
-                Netto (kg):
-                <strong class="ml-1 text-lg text-slate-900">
-                  {{
-                    netto == null
-                      ? '—'
-                      : netto.toLocaleString('id-ID', { maximumFractionDigits: 10 })
-                  }}
-                </strong>
-                <span v-if="netto == null" class="ml-1 text-slate-500">
-                  (isi berat In dan Out)
-                </span>
-              </p>
-              <button
-                :disabled="busy"
-                class="rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-              >
-                {{ sending ? 'Mengirim...' : 'Kirim Transaksi Gate' }}
-              </button>
+          <div class="flex flex-col gap-4 border-t border-slate-100 pt-6 sm:flex-row sm:items-center">
+            <div class="flex flex-1 items-baseline gap-2 rounded-xl bg-slate-900 px-5 py-3.5 text-white">
+              <span class="text-xs font-medium uppercase tracking-wide text-slate-400">Netto</span>
+              <strong class="text-2xl font-bold tabular-nums">
+                {{ netto == null ? '—' : netto.toLocaleString('id-ID', { maximumFractionDigits: 10 }) }}
+              </strong>
+              <span class="text-sm text-slate-400">kg</span>
+              <span v-if="netto == null" class="ml-auto text-xs text-slate-400">isi berat In dan Out</span>
             </div>
-          </form>
-        </section>
-      </div>
-    </section>
+            <button :disabled="busy" class="btn btn-success px-6 py-3.5">
+              <span v-if="sending" class="spinner" aria-hidden="true" />
+              {{ sending ? 'Mengirim...' : 'Kirim Transaksi Gate' }}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
   </main>
 </template>
