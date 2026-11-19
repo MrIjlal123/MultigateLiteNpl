@@ -24,6 +24,8 @@ interface VesselDeliveryData {
   id?: string | number
   noPpk?: string | null
   noPkk?: string | null
+  destinationCode?: string | null
+  destinationName?: string | null
   noSpmk: string
   nmKapal: string
   nmKegiatan: string
@@ -38,6 +40,8 @@ interface BookingSlotPayload {
   noPkk: string
   customerCode: string
   customerName: string
+  destinationCode: string
+  destinationName: string
   kuotaTruck: number | null
   programName: 'NPL'
 }
@@ -62,6 +66,8 @@ const form = reactive({
   endDate: '',
   customerCode: '',
   customerName: '',
+  destinationCode: '',
+  destinationName: '',
   kuotaTruck: null as number | null,
 })
 
@@ -99,6 +105,8 @@ function resetForm() {
   form.endDate = ''
   form.customerCode = ''
   form.customerName = ''
+  form.destinationCode = ''
+  form.destinationName = ''
   form.kuotaTruck = null
 }
 
@@ -108,6 +116,8 @@ function selectVessel(vessel: VesselDeliveryData) {
   form.endDate = ''
   form.customerCode = ''
   form.customerName = ''
+  form.destinationCode = vessel.destinationCode?.trim() || ''
+  form.destinationName = vessel.destinationName?.trim() || ''
   form.kuotaTruck = null
   error.value = ''
   success.value = ''
@@ -138,6 +148,14 @@ async function loadVessels() {
 async function submitBooking() {
   if (!activeVessel.value || busy()) return
 
+  const destinationCode = form.destinationCode.trim()
+  const destinationName = form.destinationName.trim()
+  if (!destinationCode || !destinationName) {
+    error.value = 'Kode dan nama tujuan wajib diisi.'
+    success.value = ''
+    return
+  }
+
   const payload: BookingSlotPayload[] = [
     {
       startDate: formatDateTime(form.startDate),
@@ -145,6 +163,8 @@ async function submitBooking() {
       noPkk: vesselBookingPkk(activeVessel.value),
       customerCode: form.customerCode.trim(),
       customerName: form.customerName.trim(),
+      destinationCode,
+      destinationName,
       kuotaTruck: form.kuotaTruck,
       programName: 'NPL',
     },
@@ -246,6 +266,14 @@ onMounted(loadVessels)
                       <dt class="meta-label">No. SPMK</dt>
                       <dd class="meta-value">{{ vessel.noSpmk || '-' }}</dd>
                     </div>
+                    <div>
+                      <dt class="meta-label">Kode Tujuan</dt>
+                      <dd class="meta-value">{{ vessel.destinationCode || '-' }}</dd>
+                    </div>
+                    <div>
+                      <dt class="meta-label">Nama Tujuan</dt>
+                      <dd class="meta-value">{{ vessel.destinationName || '-' }}</dd>
+                    </div>
                   </dl>
                 </div>
                 <button
@@ -302,6 +330,17 @@ onMounted(loadVessels)
                 <label class="field-label">
                   Nama Pelanggan <span class="text-red-600">*</span>
                   <input v-model="form.customerName" type="text" class="input" />
+                </label>
+              </div>
+
+              <div class="grid gap-3 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+                <label class="field-label">
+                  Kode Tujuan <span class="text-red-600">*</span>
+                  <input v-model="form.destinationCode" type="text" required class="input" />
+                </label>
+                <label class="field-label">
+                  Nama Tujuan <span class="text-red-600">*</span>
+                  <input v-model="form.destinationName" type="text" required class="input" />
                 </label>
               </div>
 

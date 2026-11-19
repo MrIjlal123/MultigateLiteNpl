@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import api from '@/services/api'
 
 type NumericValue = number | string | null
@@ -19,6 +19,7 @@ interface EbastDetail {
 
 interface EbastApproval {
   levelApprove?: NumericValue
+  nip?: string | number | null
   nama?: string | null
   jabatan?: string | null
   statusApprove?: NumericValue
@@ -51,8 +52,38 @@ const noBastSearch = ref('')
 const ebastItems = ref<EbastData[]>([])
 const selectedEbast = ref<EbastData | null>(null)
 const loading = ref(false)
+const submittingApproval = ref(false)
 const error = ref('')
+const success = ref('')
 const note = ref('')
+const rejectValidationError = ref('')
+
+function isPendingApproval(approval: EbastApproval) {
+  return approval.statusApprove === 0 || approval.statusApprove === '0'
+}
+
+function approvalLevel(value: NumericValue | undefined) {
+  if (value == null || value === '') return null
+  const level = Number(value)
+  return Number.isInteger(level) ? level : null
+}
+
+function approvalNip(approval: EbastApproval) {
+  return approval.nip == null ? '' : String(approval.nip).trim()
+}
+
+const activeApproval = computed(
+  () => selectedEbast.value?.approval?.find(isPendingApproval) ?? null,
+)
+const canSubmitApproval = computed(() => {
+  const approval = activeApproval.value
+  return Boolean(
+    approval &&
+      approvalLevel(approval.levelApprove) !== null &&
+      approvalNip(approval) &&
+      !submittingApproval.value,
+  )
+})
 
 function apiErrorMessage(requestError: unknown) {
   if (axios.isAxiosError(requestError)) {
@@ -93,14 +124,17 @@ function statusClass(status: NumericValue | undefined) {
   return 'bg-slate-100 text-slate-700'
 }
 
-async function loadEbast() {
+async function loadEbast(preserveSelection = false) {
+  const previousSelection = selectedEbast.value
   loading.value = true
   error.value = ''
-  selectedEbast.value = null
-  note.value = ''
+  if (!preserveSelection) {
+    selectedEbast.value = null
+    note.value = ''
+  }
   try {
     const { data } = await api.post<ApiResponse<EbastData[]>>(
-      'http://192.168.111.200:8079/npl/getDataEBastPtosm',
+      '/getDataEBastPtosm',
       { noBast: noBastSearch.value.trim(), page: 1, size: 50 },
     )
     if (data.status === 'E') {
@@ -110,9 +144,20 @@ async function loadEbast() {
       throw new Error(data.message || 'Format data eBAST dari server tidak valid.')
     }
     ebastItems.value = data.data
+    if (preserveSelection && previousSelection) {
+      selectedEbast.value =
+        data.data.find(
+          (item) =>
+            previousSelection.id != null &&
+            item.id != null &&
+            String(item.id) === String(previousSelection.id),
+        ) ??
+        data.data.find((item) => item.noBast === previousSelection.noBast) ??
+        null
+    }
   } catch (requestError) {
     error.value = apiErrorMessage(requestError)
-    ebastItems.value = []
+    if (!preserveSelection) ebastItems.value = []
   } finally {
     loading.value = false
   }
@@ -121,22 +166,55 @@ async function loadEbast() {
 function selectEbast(item: EbastData) {
   selectedEbast.value = item
   note.value = ''
+  rejectValidationError.value = ''
   error.value = ''
+  success.value = ''
 }
 
-function handleApprove() {
-  if (window.confirm(`Setujui eBAST ${selectedEbast.value?.noBast || ''}?`)) {
-    window.alert('Konfirmasi approve diterima. Pengiriman ke server akan tersedia setelah endpoint verifikasi ditambahkan.')
+async function submitApproval(action: 'A' | 'R') {
+  const ebast = selectedEbast.value
+  const approval = activeApproval.value
+  if (!ebast || !approval || submittingApproval.value) return
+
+  const keterangan = note.value.trim()
+  if (action === 'R' && !keterangan) {
+    rejectValidationError.value = 'Catatan wajib diisi untuk menolak eBAST.'
+    return
   }
-}
 
-function handleReject() {
-  if (window.confirm(`Tolak eBAST ${selectedEbast.value?.noBast || ''}?`)) {
-    window.alert(
-      note.value.trim()
-        ? 'Konfirmasi reject diterima. Pengiriman catatan ke server akan tersedia setelah endpoint verifikasi ditambahkan.'
-        : 'Konfirmasi reject diterima tanpa catatan. Pengiriman ke server akan tersedia setelah endpoint verifikasi ditambahkan.',
-    )
+  const level = approvalLevel(approval.levelApprove)
+  const approver = approvalNip(approval)
+  if (level === null || !approver) {
+    error.value = 'Level approval aktif belum memiliki level dan NIP approver yang valid.'
+    return
+  }
+
+  const actionLabel = action === 'A' ? 'Setujui' : 'Tolak'
+  if (!window.confirm(`${actionLabel} eBAST ${ebast.noBast}?`)) return
+
+  submittingApproval.value = true
+  error.value = ''
+  success.value = ''
+  rejectValidationError.value = ''
+  try {
+    const { data } = await api.post<ApiResponse<unknown>>('/approveEBastPtosm', {
+      noBast: ebast.noBast,
+      level,
+      action,
+      approver,
+      keterangan,
+    })
+    if (data.status !== 'S') {
+      throw new Error(data.message || `Gagal ${actionLabel.toLowerCase()} eBAST.`)
+    }
+
+    note.value = ''
+    await loadEbast(true)
+    success.value = data.message || `eBAST ${ebast.noBast} berhasil diproses.`
+  } catch (requestError) {
+    error.value = apiErrorMessage(requestError)
+  } finally {
+    submittingApproval.value = false
   }
 }
 
@@ -153,6 +231,7 @@ onMounted(loadEbast)
       </div>
 
       <p v-if="error" role="alert" class="alert-error">{{ error }}</p>
+      <p v-if="success" role="status" class="alert-success">{{ success }}</p>
 
       <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
         <section class="card">
@@ -163,15 +242,16 @@ onMounted(loadEbast)
                 {{ ebastItems.length }} data
               </span>
             </div>
-            <form class="mt-4 flex gap-2" @submit.prevent="loadEbast">
+            <form class="mt-4 flex gap-2" @submit.prevent="loadEbast()">
               <input
                 v-model="noBastSearch"
                 type="search"
                 placeholder="Cari No. BAST"
                 aria-label="Cari berdasarkan No. BAST"
+                :disabled="submittingApproval"
                 class="input mt-0 min-w-0 flex-1"
               />
-              <button type="submit" :disabled="loading" class="btn btn-primary px-5">
+              <button type="submit" :disabled="loading || submittingApproval" class="btn btn-primary px-5">
                 <span v-if="loading" class="spinner" aria-hidden="true" />
                 {{ loading ? 'Memuat' : 'Cari' }}
               </button>
@@ -193,6 +273,7 @@ onMounted(loadEbast)
                     ? 'border-brand-600 bg-brand-50/60'
                     : 'border-transparent hover:bg-slate-50'
                 "
+                :disabled="submittingApproval"
                 @click="selectEbast(item)"
               >
                 <div class="flex items-start justify-between gap-3">
@@ -316,15 +397,42 @@ onMounted(loadEbast)
                 <textarea
                   v-model="note"
                   rows="3"
-                  placeholder="Opsional — isi alasan jika eBAST ditolak"
+                  placeholder="Wajib diisi jika eBAST ditolak"
+                  :disabled="submittingApproval"
+                  @input="rejectValidationError = ''"
                   class="input resize-y"
                 />
               </label>
+              <p v-if="rejectValidationError" role="alert" class="mt-2 text-sm text-red-600">
+                {{ rejectValidationError }}
+              </p>
+              <p
+                v-if="!activeApproval"
+                class="mt-2 text-sm text-slate-500"
+              >
+                Tidak ada level approval yang menunggu diproses.
+              </p>
+              <p
+                v-else-if="!canSubmitApproval && !submittingApproval"
+                class="mt-2 text-sm text-red-600"
+              >
+                Level approval aktif belum memiliki level atau NIP approver yang valid.
+              </p>
               <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                <button type="button" class="btn btn-success py-3 text-base" @click="handleApprove">
-                  Setuju (Approve)
+                <button
+                  type="button"
+                  :disabled="!canSubmitApproval"
+                  class="btn btn-success py-3 text-base"
+                  @click="submitApproval('A')"
+                >
+                  {{ submittingApproval ? 'Memproses...' : 'Setuju (Approve)' }}
                 </button>
-                <button type="button" class="btn btn-danger py-3 text-base" @click="handleReject">
+                <button
+                  type="button"
+                  :disabled="!canSubmitApproval"
+                  class="btn btn-danger py-3 text-base"
+                  @click="submitApproval('R')"
+                >
                   Tolak (Reject)
                 </button>
               </div>

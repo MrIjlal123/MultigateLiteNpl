@@ -3,6 +3,7 @@ import Login from '@/views/Login.vue'
 import GateTransaction from '@/views/GateTransaction.vue'
 import ReceivingModule from '@/views/ReceivingModule.vue'
 import BookingSlotModule from '@/views/BookingSlotModule.vue'
+import DeliveryConveyorModule from '@/views/DeliveryConveyorModule.vue'
 import VerifikasiEbastModule from '@/views/VerifikasiEbastModule.vue'
 
 const router = createRouter({
@@ -21,6 +22,12 @@ const router = createRouter({
       path: '/booking',
       name: 'booking',
       component: BookingSlotModule,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/delivery-conveyor',
+      name: 'delivery-conveyor',
+      component: DeliveryConveyorModule,
       meta: { requiresAuth: true },
     },
     {

@@ -4,7 +4,12 @@ import { computed, nextTick, ref } from 'vue'
 import api from '@/services/api'
 
 type RecordData = Record<string, unknown>
-type ApiResponse = { status?: string; message?: string; data?: RecordData[] }
+interface DataGatePtosm extends RecordData {
+  destinationCode: string | null
+  destinationName: string | null
+}
+
+type ApiResponse = { status?: string; message?: string; data?: DataGatePtosm[] }
 type GatePayload = {
   noSpmk: string
   noJob: string
@@ -19,7 +24,7 @@ type GatePayload = {
 }
 
 const noJob = ref('')
-const job = ref<RecordData | null>(null)
+const job = ref<DataGatePtosm | null>(null)
 const gateInDate = ref('')
 const beratIn = ref('')
 const gateOutDate = ref('')
@@ -50,8 +55,16 @@ const jobSummary = computed(() => {
     { label: 'Kapal', value: read(job.value, ['nmKapal', 'namaKapal']) },
     { label: 'PBM', value: read(job.value, ['nmPbm', 'namaPbm', 'pbm']) },
     { label: 'No. PKK', value: read(job.value, ['noPkk']) },
+    { label: 'Tujuan / Destinasi', value: destinationLabel(job.value) },
   ].filter((item) => item.value != null && item.value !== '')
 })
+
+function destinationLabel(data: DataGatePtosm) {
+  const name = typeof data.destinationName === 'string' ? data.destinationName.trim() : ''
+  if (!name) return '-'
+  const code = typeof data.destinationCode === 'string' ? data.destinationCode.trim() : ''
+  return code ? `${name} (${code})` : name
+}
 
 function read(source: RecordData | null, keys: string[]) {
   const key =

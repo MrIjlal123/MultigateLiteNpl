@@ -64,6 +64,7 @@ const links = [
   { to: '/gate', label: 'Gate Operation' },
   { to: '/receiving', label: 'Receiving' },
   { to: '/booking', label: 'Booking Slot' },
+  { to: '/delivery-conveyor', label: 'Delivery Conveyor' },
   { to: '/ebast', label: 'Verifikasi eBAST' },
 ]
 
