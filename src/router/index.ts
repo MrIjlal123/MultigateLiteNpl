@@ -5,11 +5,12 @@ import ReceivingModule from '@/views/ReceivingModule.vue'
 import BookingSlotModule from '@/views/BookingSlotModule.vue'
 import DeliveryConveyorModule from '@/views/DeliveryConveyorModule.vue'
 import VerifikasiEbastModule from '@/views/VerifikasiEbastModule.vue'
+import { isAuthenticated } from '@/services/authSession'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', redirect: () => (localStorage.getItem('access_token') ? '/gate' : '/login') },
+    { path: '/', redirect: () => (isAuthenticated() ? '/gate' : '/login') },
     { path: '/login', name: 'login', component: Login },
     { path: '/gate', name: 'gate', component: GateTransaction, meta: { requiresAuth: true } },
     {
@@ -40,7 +41,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  const hasToken = Boolean(localStorage.getItem('access_token'))
+  const hasToken = isAuthenticated()
   if (to.meta.requiresAuth && !hasToken) return { name: 'login' }
   if (to.name === 'login' && hasToken) return { name: 'gate' }
 })

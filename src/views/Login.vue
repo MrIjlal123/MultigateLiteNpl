@@ -3,6 +3,7 @@ import axios from 'axios'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ShipScene from '@/components/ShipScene.vue'
+import { startAuthSession } from '@/services/authSession'
 
 type LoginResponse = {
   token: string
@@ -33,7 +34,7 @@ async function login() {
     const token = response.data.token
     if (!token) throw new Error(response.data.message || 'Token autentikasi tidak tersedia.')
 
-    localStorage.setItem('access_token', token)
+    startAuthSession(token)
     docking.value = true
     await shipScene.value?.berth()
     await router.push('/gate')

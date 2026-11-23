@@ -51,14 +51,65 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import {
+  clearAuthSession,
+  isAuthenticated,
+  recordSessionActivity,
+  sessionTimeRemaining,
+} from '@/services/authSession'
 
 const route = useRoute()
 const router = useRouter()
 const showNavigation = computed(
-  () => route.name !== 'login' && Boolean(localStorage.getItem('access_token')),
+  () => route.name !== 'login' && isAuthenticated(),
 )
+
+let idleTimer: ReturnType<typeof setTimeout> | undefined
+
+function endExpiredSession() {
+  clearAuthSession()
+  if (route.name !== 'login') void router.replace('/login')
+}
+
+function scheduleIdleCheck() {
+  if (idleTimer) clearTimeout(idleTimer)
+  if (!isAuthenticated()) {
+    endExpiredSession()
+    return
+  }
+  idleTimer = setTimeout(endExpiredSession, sessionTimeRemaining())
+}
+
+function handleUserActivity() {
+  if (!isAuthenticated()) {
+    endExpiredSession()
+    return
+  }
+  recordSessionActivity()
+  scheduleIdleCheck()
+}
+
+function handleStorageChange(event: StorageEvent) {
+  if (event.key === 'last_activity_at' || event.key === 'access_token') scheduleIdleCheck()
+}
+
+const activityEvents = ['pointerdown', 'keydown', 'wheel', 'touchstart'] as const
+
+onMounted(() => {
+  scheduleIdleCheck()
+  activityEvents.forEach((event) => window.addEventListener(event, handleUserActivity, { passive: true }))
+  window.addEventListener('storage', handleStorageChange)
+})
+
+watch(() => route.fullPath, scheduleIdleCheck)
+
+onUnmounted(() => {
+  if (idleTimer) clearTimeout(idleTimer)
+  activityEvents.forEach((event) => window.removeEventListener(event, handleUserActivity))
+  window.removeEventListener('storage', handleStorageChange)
+})
 
 const links = [
   { to: '/gate', label: 'Gate Operation' },
@@ -69,7 +120,7 @@ const links = [
 ]
 
 async function logout() {
-  localStorage.removeItem('access_token')
+  clearAuthSession()
   await router.replace('/login')
 }
 </script>
