@@ -35,6 +35,7 @@ interface VesselDeliveryData {
 }
 
 interface BookingSlotPayload {
+  outboundNo: string
   startDate: string
   endDate: string
   noPkk: string
@@ -60,8 +61,11 @@ const loading = ref(false)
 const sending = ref(false)
 const error = ref('')
 const success = ref('')
+const generatedOutboundNos = new Set<string>()
+const outboundNoCharacters = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
 
 const form = reactive({
+  outboundNo: '',
   startDate: '',
   endDate: '',
   customerCode: '',
@@ -72,6 +76,28 @@ const form = reactive({
 })
 
 const busy = () => loading.value || sending.value
+
+function generateOutboundNo() {
+  let uniqueCode = ''
+  const maxValidByte = Math.floor(256 / outboundNoCharacters.length) * outboundNoCharacters.length
+
+  do {
+    uniqueCode = ''
+    while (uniqueCode.length < 7) {
+      const bytes = new Uint8Array(7 - uniqueCode.length)
+      crypto.getRandomValues(bytes)
+      for (const byte of bytes) {
+        if (byte < maxValidByte) {
+          uniqueCode += outboundNoCharacters[byte % outboundNoCharacters.length]
+          if (uniqueCode.length === 7) break
+        }
+      }
+    }
+  } while (generatedOutboundNos.has(uniqueCode))
+
+  generatedOutboundNos.add(uniqueCode)
+  return `NPL-${uniqueCode}`
+}
 
 function responseMessage(response: unknown, fallback: string) {
   if (!response || typeof response !== 'object') return fallback
@@ -101,6 +127,7 @@ function vesselBookingPkk(vessel: VesselDeliveryData) {
 
 function resetForm() {
   activeVessel.value = null
+  form.outboundNo = ''
   form.startDate = ''
   form.endDate = ''
   form.customerCode = ''
@@ -112,6 +139,7 @@ function resetForm() {
 
 function selectVessel(vessel: VesselDeliveryData) {
   activeVessel.value = vessel
+  form.outboundNo = generateOutboundNo()
   form.startDate = ''
   form.endDate = ''
   form.customerCode = ''
@@ -158,6 +186,7 @@ async function submitBooking() {
 
   const payload: BookingSlotPayload[] = [
     {
+      outboundNo: form.outboundNo.trim(),
       startDate: formatDateTime(form.startDate),
       endDate: formatDateTime(form.endDate),
       noPkk: vesselBookingPkk(activeVessel.value),
@@ -311,6 +340,11 @@ onMounted(loadVessels)
 
           <form class="space-y-5 p-5 sm:p-6" @submit.prevent="submitBooking">
             <fieldset :disabled="busy()" class="space-y-4 disabled:opacity-70">
+              <label class="field-label">
+                Outbound No.
+                <input :value="form.outboundNo" type="text" readonly class="input" />
+              </label>
+
               <div class="grid gap-3 sm:grid-cols-2">
                 <label class="field-label">
                   Tanggal Awal <span class="text-red-600">*</span>

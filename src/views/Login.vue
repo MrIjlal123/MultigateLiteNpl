@@ -52,21 +52,30 @@ async function login() {
     <section
       class="relative hidden overflow-hidden bg-gradient-to-br from-brand-900 via-brand-700 to-sky-600 p-12 text-white lg:flex lg:flex-col"
     >
-      <div class="absolute -right-24 -top-24 size-96 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
-      <div class="absolute -bottom-32 -left-16 size-96 rounded-full bg-sky-300/20 blur-3xl" aria-hidden="true" />
+      <div
+        class="absolute -right-24 -top-24 size-96 rounded-full bg-white/10 blur-3xl"
+        aria-hidden="true"
+      />
+      <div
+        class="absolute -bottom-32 -left-16 size-96 rounded-full bg-sky-300/20 blur-3xl"
+        aria-hidden="true"
+      />
       <div class="relative flex items-center gap-3">
         <span class="grid size-12 place-items-center rounded-xl bg-white p-1.5 shadow-lg">
           <img src="/Logo-PTOSM.png" alt="" class="h-full w-full object-contain" />
         </span>
-        <span class="text-lg font-semibold">Multigate NPL Lite</span>
+        <span class="text-lg font-semibold">Integrasi NPL Lite</span>
       </div>
       <div class="relative -mx-12 my-6 min-h-64 flex-1">
         <ShipScene ref="shipScene" />
       </div>
       <div class="relative max-w-md">
-        <h2 class="text-4xl font-bold leading-tight tracking-tight">Operasional pelabuhan dalam satu layar.</h2>
+        <h2 class="text-4xl font-bold leading-tight tracking-tight">
+          Operasional pelabuhan dalam satu layar.
+        </h2>
         <p class="mt-4 text-base text-blue-100">
-          Gate In/Out, receiving, booking slot truk, dan verifikasi eBAST — terintegrasi dengan PTOSM.
+          Gate In/Out, receiving, booking slot truk, dan verifikasi eBAST — terintegrasi dengan
+          PTOSM.
         </p>
       </div>
       <p class="relative mt-8 text-xs text-blue-200">&copy; {{ new Date().getFullYear() }} PTOSM</p>
@@ -78,7 +87,9 @@ async function login() {
         <h1 class="text-2xl font-bold tracking-tight text-slate-900">Selamat datang</h1>
         <p class="mb-6 mt-1 text-sm text-slate-500">Masuk menggunakan akun operasional Anda.</p>
         <p v-if="error" role="alert" class="alert-error mb-5">{{ error }}</p>
-        <p v-if="docking" role="status" class="alert-success mb-5">Login berhasil. Kapal sedang sandar...</p>
+        <p v-if="docking" role="status" class="alert-success mb-5">
+          Login berhasil. Kapal sedang sandar...
+        </p>
         <label class="field-label mb-4">
           Username
           <input
