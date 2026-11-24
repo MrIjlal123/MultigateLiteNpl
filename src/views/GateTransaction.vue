@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
+import { showError, showSuccess } from '@/utils/feedback'
 import api from '@/services/api'
 
 type RecordData = Record<string, unknown>
@@ -34,6 +35,8 @@ const loading = ref(false)
 const sending = ref(false)
 const error = ref('')
 const success = ref('')
+watch(error, (message) => { if (message) void showError(message) })
+watch(success, (message) => { if (message) void showSuccess(message) })
 const gateInWeightInput = ref<HTMLInputElement | null>(null)
 const busy = computed(() => loading.value || sending.value)
 
@@ -228,9 +231,6 @@ function numberOnly(event: KeyboardEvent) {
         <h1 class="page-title">Gate Operation</h1>
         <p class="page-subtitle">Pencatatan transaksi Gate In &amp; Gate Out berdasarkan Job Order.</p>
       </div>
-
-      <p v-if="success" role="status" class="alert-success">{{ success }}</p>
-      <p v-if="error" role="alert" class="alert-error">{{ error }}</p>
 
       <section class="card">
         <div class="card-header flex items-center gap-3">

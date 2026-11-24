@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import api from '@/services/api'
+import { showError, showSuccess } from '@/utils/feedback'
 
 interface BarangItem {
   noSeq?: number | string
@@ -72,6 +73,8 @@ const loading = ref(false)
 const sending = ref(false)
 const error = ref('')
 const success = ref('')
+watch(error, (message) => { if (message) void showError(message) })
+watch(success, (message) => { if (message) void showSuccess(message) })
 
 const form = reactive({
   noBlAwb: '',
@@ -248,9 +251,6 @@ onMounted(loadVessels)
         <h1 class="page-title">Realisasi Delivery Conveyor</h1>
         <p class="page-subtitle">Kirim realisasi barang untuk kegiatan vessel delivery.</p>
       </div>
-
-      <p v-if="success" role="status" class="alert-success">{{ success }}</p>
-      <p v-if="error" role="alert" class="alert-error">{{ error }}</p>
 
       <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
         <section class="card">

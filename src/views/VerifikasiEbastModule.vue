@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import api from '@/services/api'
+import { showError, showSuccess } from '@/utils/feedback'
 
 type NumericValue = number | string | null
 
@@ -57,6 +58,9 @@ const error = ref('')
 const success = ref('')
 const note = ref('')
 const rejectValidationError = ref('')
+watch(error, (message) => { if (message) void showError(message) })
+watch(success, (message) => { if (message) void showSuccess(message) })
+watch(rejectValidationError, (message) => { if (message) void showError(message) })
 
 function isPendingApproval(approval: EbastApproval) {
   return approval.statusApprove === 0 || approval.statusApprove === '0'
@@ -230,9 +234,6 @@ onMounted(loadEbast)
         <p class="page-subtitle">Tinjau detail eBAST dan status persetujuannya.</p>
       </div>
 
-      <p v-if="error" role="alert" class="alert-error">{{ error }}</p>
-      <p v-if="success" role="status" class="alert-success">{{ success }}</p>
-
       <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
         <section class="card">
           <header class="card-header">
@@ -403,9 +404,6 @@ onMounted(loadEbast)
                   class="input resize-y"
                 />
               </label>
-              <p v-if="rejectValidationError" role="alert" class="mt-2 text-sm text-red-600">
-                {{ rejectValidationError }}
-              </p>
               <p
                 v-if="!activeApproval"
                 class="mt-2 text-sm text-slate-500"
