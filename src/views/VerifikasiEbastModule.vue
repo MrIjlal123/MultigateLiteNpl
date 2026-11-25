@@ -2,7 +2,7 @@
 import axios from 'axios'
 import { computed, onMounted, ref, watch } from 'vue'
 import api from '@/services/api'
-import { showError, showSuccess } from '@/utils/feedback'
+import { showConfirmation, showError, showSuccess } from '@/utils/feedback'
 
 type NumericValue = number | string | null
 
@@ -194,7 +194,12 @@ async function submitApproval(action: 'A' | 'R') {
   }
 
   const actionLabel = action === 'A' ? 'Setujui' : 'Tolak'
-  if (!window.confirm(`${actionLabel} eBAST ${ebast.noBast}?`)) return
+  const confirmed = await showConfirmation(
+    `${actionLabel} eBAST?`,
+    `Anda yakin ingin ${actionLabel.toLowerCase()} eBAST ${ebast.noBast}?`,
+    action === 'A' ? 'Ya, Setujui' : 'Ya, Tolak',
+  )
+  if (!confirmed) return
 
   submittingApproval.value = true
   error.value = ''

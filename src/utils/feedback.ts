@@ -31,3 +31,27 @@ export function showSuccess(message: string) {
 export function showError(message: string) {
   return showFeedback('error', 'Gagal', message)
 }
+
+export async function showConfirmation(title: string, message: string, confirmText: string) {
+  const result = await Swal.fire({
+    icon: 'question',
+    title,
+    text: message,
+    confirmButtonText: confirmText,
+    cancelButtonText: 'Batal',
+    showCancelButton: true,
+    reverseButtons: true,
+    buttonsStyling: false,
+    customClass: {
+      popup: 'feedback-popup',
+      title: 'feedback-title',
+      htmlContainer: 'feedback-message',
+      confirmButton: 'feedback-button',
+      cancelButton: 'feedback-cancel-button',
+    },
+    showClass: { popup: 'swal2-show feedback-popup-show' },
+    hideClass: { popup: 'swal2-hide feedback-popup-hide' },
+  })
+
+  return result.isConfirmed
+}
