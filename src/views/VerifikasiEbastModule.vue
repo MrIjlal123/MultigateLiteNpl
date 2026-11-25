@@ -58,9 +58,15 @@ const error = ref('')
 const success = ref('')
 const note = ref('')
 const rejectValidationError = ref('')
-watch(error, (message) => { if (message) void showError(message) })
-watch(success, (message) => { if (message) void showSuccess(message) })
-watch(rejectValidationError, (message) => { if (message) void showError(message) })
+watch(error, (message) => {
+  if (message) void showError(message)
+})
+watch(success, (message) => {
+  if (message) void showSuccess(message)
+})
+watch(rejectValidationError, (message) => {
+  if (message) void showError(message)
+})
 
 function isPendingApproval(approval: EbastApproval) {
   return approval.statusApprove === 0 || approval.statusApprove === '0'
@@ -83,9 +89,9 @@ const canSubmitApproval = computed(() => {
   const approval = activeApproval.value
   return Boolean(
     approval &&
-      approvalLevel(approval.levelApprove) !== null &&
-      approvalNip(approval) &&
-      !submittingApproval.value,
+    approvalLevel(approval.levelApprove) !== null &&
+    approvalNip(approval) &&
+    !submittingApproval.value,
   )
 })
 
@@ -137,10 +143,11 @@ async function loadEbast(preserveSelection = false) {
     note.value = ''
   }
   try {
-    const { data } = await api.post<ApiResponse<EbastData[]>>(
-      '/getDataEBastPtosm',
-      { noBast: noBastSearch.value.trim(), page: 1, size: 50 },
-    )
+    const { data } = await api.post<ApiResponse<EbastData[]>>('/getDataEBastPtosm', {
+      noBast: noBastSearch.value.trim(),
+      page: 1,
+      size: 50,
+    })
     if (data.status === 'E') {
       throw new Error(data.message || 'Gagal mengambil daftar eBAST.')
     }
@@ -244,7 +251,9 @@ onMounted(loadEbast)
           <header class="card-header">
             <div class="flex items-center justify-between gap-3">
               <h2 class="card-title">Daftar eBAST</h2>
-              <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+              <span
+                class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600"
+              >
                 {{ ebastItems.length }} data
               </span>
             </div>
@@ -257,7 +266,11 @@ onMounted(loadEbast)
                 :disabled="submittingApproval"
                 class="input mt-0 min-w-0 flex-1"
               />
-              <button type="submit" :disabled="loading || submittingApproval" class="btn btn-primary px-5">
+              <button
+                type="submit"
+                :disabled="loading || submittingApproval"
+                class="btn btn-primary px-5"
+              >
                 <span v-if="loading" class="spinner" aria-hidden="true" />
                 {{ loading ? 'Memuat' : 'Cari' }}
               </button>
@@ -268,7 +281,9 @@ onMounted(loadEbast)
             <span class="spinner size-6 text-brand-600" aria-hidden="true" />
             Memuat daftar eBAST...
           </div>
-          <div v-else-if="!ebastItems.length" class="empty-state">Tidak ada eBAST yang ditemukan.</div>
+          <div v-else-if="!ebastItems.length" class="empty-state">
+            Tidak ada eBAST yang ditemukan.
+          </div>
           <ul v-else class="max-h-[70vh] divide-y divide-slate-100 overflow-y-auto">
             <li v-for="(item, index) in ebastItems" :key="item.id ?? `${item.noBast}-${index}`">
               <button
@@ -283,7 +298,9 @@ onMounted(loadEbast)
                 @click="selectEbast(item)"
               >
                 <div class="flex items-start justify-between gap-3">
-                  <p class="min-w-0 break-words font-semibold text-slate-900">{{ item.noBast || '-' }}</p>
+                  <p class="min-w-0 break-words font-semibold text-slate-900">
+                    {{ item.noBast || '-' }}
+                  </p>
                   <span
                     class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold"
                     :class="statusClass(item.status)"
@@ -303,24 +320,33 @@ onMounted(loadEbast)
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p class="meta-label">No. BAST</p>
-                <h2 class="mt-0.5 break-words text-lg font-bold text-slate-900">{{ selectedEbast.noBast || '-' }}</h2>
+                <h2 class="mt-0.5 break-words text-lg font-bold text-slate-900">
+                  {{ selectedEbast.noBast || '-' }}
+                </h2>
                 <p class="mt-1 text-sm text-slate-500">
                   {{ selectedEbast.nmKapal || '-' }} · Voyage {{ selectedEbast.voyage || '-' }} ·
                   {{ formatDate(selectedEbast.tglBast) }}
                 </p>
               </div>
-              <span class="rounded-full px-3 py-1 text-xs font-semibold" :class="statusClass(selectedEbast.status)">
+              <span
+                class="rounded-full px-3 py-1 text-xs font-semibold"
+                :class="statusClass(selectedEbast.status)"
+              >
                 {{ statusLabel(selectedEbast.status) }}
               </span>
             </div>
             <dl class="mt-4 grid grid-cols-3 gap-3">
               <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
                 <dt class="meta-label">Total BL</dt>
-                <dd class="mt-1 text-lg font-bold tabular-nums text-slate-900">{{ displayValue(selectedEbast.totalBl) }}</dd>
+                <dd class="mt-1 text-lg font-bold tabular-nums text-slate-900">
+                  {{ displayValue(selectedEbast.totalBl) }}
+                </dd>
               </div>
               <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
                 <dt class="meta-label">Total WB</dt>
-                <dd class="mt-1 text-lg font-bold tabular-nums text-slate-900">{{ displayValue(selectedEbast.totalWb) }}</dd>
+                <dd class="mt-1 text-lg font-bold tabular-nums text-slate-900">
+                  {{ displayValue(selectedEbast.totalWb) }}
+                </dd>
               </div>
               <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
                 <dt class="meta-label">Short/Over</dt>
@@ -340,8 +366,8 @@ onMounted(loadEbast)
                     <tr>
                       <th class="px-4 py-3 font-semibold">Consignee</th>
                       <th class="px-4 py-3 font-semibold">No. BL</th>
-                      <th class="px-4 py-3 text-right font-semibold">Tonase BL</th>
-                      <th class="px-4 py-3 text-right font-semibold">Tonase WB</th>
+                      <th class="px-4 py-3 text-right font-semibold">Tonase Tumpuk</th>
+                      <th class="px-4 py-3 text-right font-semibold">Tonase Delivery</th>
                       <th class="px-4 py-3 text-right font-semibold">Short/Over</th>
                       <th class="px-4 py-3 text-right font-semibold">Colli</th>
                     </tr>
@@ -352,15 +378,27 @@ onMounted(loadEbast)
                       :key="detail.noSeq ?? index"
                       class="hover:bg-slate-50/70"
                     >
-                      <td class="px-4 py-3 text-slate-800">{{ detail.consigne || detail.consignee || '-' }}</td>
+                      <td class="px-4 py-3 text-slate-800">
+                        {{ detail.consigne || detail.consignee || '-' }}
+                      </td>
                       <td class="px-4 py-3 font-medium text-slate-800">{{ detail.noBl || '-' }}</td>
-                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">{{ displayValue(detail.tonaseBl) }}</td>
-                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">{{ displayValue(detail.tonaseWb) }}</td>
-                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">{{ displayValue(detail.shortOver) }}</td>
-                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">{{ displayValue(detail.colli) }}</td>
+                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">
+                        {{ displayValue(detail.tonaseBl) }}
+                      </td>
+                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">
+                        {{ displayValue(detail.tonaseWb) }}
+                      </td>
+                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">
+                        {{ displayValue(detail.shortOver) }}
+                      </td>
+                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">
+                        {{ displayValue(detail.colli) }}
+                      </td>
                     </tr>
                     <tr v-if="!selectedEbast.detail?.length">
-                      <td colspan="6" class="px-4 py-6 text-center text-slate-500">Tidak ada detail barang.</td>
+                      <td colspan="6" class="px-4 py-6 text-center text-slate-500">
+                        Tidak ada detail barang.
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -381,7 +419,9 @@ onMounted(loadEbast)
                     {{ displayValue(approval.levelApprove) }}
                   </span>
                   <div class="min-w-0 flex-1">
-                    <p class="truncate text-sm font-semibold text-slate-900">{{ approval.nama || '-' }}</p>
+                    <p class="truncate text-sm font-semibold text-slate-900">
+                      {{ approval.nama || '-' }}
+                    </p>
                     <p class="truncate text-xs text-slate-500">{{ approval.jabatan || '-' }}</p>
                   </div>
                   <span
@@ -392,7 +432,10 @@ onMounted(loadEbast)
                   </span>
                 </li>
               </ol>
-              <p v-else class="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500">
+              <p
+                v-else
+                class="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500"
+              >
                 Belum ada data approval.
               </p>
             </section>
@@ -409,10 +452,7 @@ onMounted(loadEbast)
                   class="input resize-y"
                 />
               </label>
-              <p
-                v-if="!activeApproval"
-                class="mt-2 text-sm text-slate-500"
-              >
+              <p v-if="!activeApproval" class="mt-2 text-sm text-slate-500">
                 Tidak ada level approval yang menunggu diproses.
               </p>
               <p
