@@ -15,6 +15,8 @@ interface EbastDetail {
   tonaseWb?: NumericValue
   shortOver?: NumericValue
   colli?: NumericValue
+  statusApprove?: NumericValue
+  keterangan?: string | null
   [key: string]: unknown
 }
 
@@ -24,6 +26,7 @@ interface EbastApproval {
   nama?: string | null
   jabatan?: string | null
   statusApprove?: NumericValue
+  keterangan?: string | null
   [key: string]: unknown
 }
 
@@ -359,15 +362,18 @@ onMounted(loadEbast)
 
           <div class="space-y-6 p-5 sm:p-6">
             <section>
-              <h3 class="mb-3 text-sm font-semibold text-slate-900">Detail Barang</h3>
+              <h3 class="mb-3 text-sm font-semibold text-slate-900">
+                Detail Barang ({{ selectedEbast.detail?.length ?? 0 }})
+              </h3>
               <div class="overflow-x-auto rounded-xl border border-slate-200">
-                <table class="w-full min-w-[680px] text-left text-sm">
+                <table class="w-full min-w-[760px] text-left text-sm">
                   <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500">
                     <tr>
                       <th class="px-4 py-3 font-semibold">Consignee</th>
+                      <th class="px-4 py-3 font-semibold">Status Approval</th>
                       <th class="px-4 py-3 font-semibold">No. BL</th>
-                      <th class="px-4 py-3 text-right font-semibold">Tonase Tumpuk</th>
-                      <th class="px-4 py-3 text-right font-semibold">Tonase Delivery</th>
+                      <th class="px-4 py-3 text-right font-semibold">Tonase BL</th>
+                      <th class="px-4 py-3 text-right font-semibold">Tonase WB</th>
                       <th class="px-4 py-3 text-right font-semibold">Short/Over</th>
                       <th class="px-4 py-3 text-right font-semibold">Colli</th>
                     </tr>
@@ -376,27 +382,28 @@ onMounted(loadEbast)
                     <tr
                       v-for="(detail, index) in selectedEbast.detail ?? []"
                       :key="detail.noSeq ?? index"
-                      class="hover:bg-slate-50/70"
+                      class="align-top hover:bg-slate-50/70"
                     >
-                      <td class="px-4 py-3 text-slate-800">
+                      <td class="px-4 py-3 font-medium text-slate-800">
                         {{ detail.consigne || detail.consignee || '-' }}
+                        <p v-if="detail.keterangan" class="mt-1 whitespace-pre-wrap text-xs font-normal text-slate-500">
+                          {{ detail.keterangan }}
+                        </p>
                       </td>
-                      <td class="px-4 py-3 font-medium text-slate-800">{{ detail.noBl || '-' }}</td>
-                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">
-                        {{ displayValue(detail.tonaseBl) }}
+                      <td class="px-4 py-3">
+                        <span
+                          class="rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                          :class="statusClass(detail.statusApprove)"
+                        >{{ statusLabel(detail.statusApprove) }}</span>
                       </td>
-                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">
-                        {{ displayValue(detail.tonaseWb) }}
-                      </td>
-                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">
-                        {{ displayValue(detail.shortOver) }}
-                      </td>
-                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">
-                        {{ displayValue(detail.colli) }}
-                      </td>
+                      <td class="px-4 py-3 text-slate-800">{{ detail.noBl || '-' }}</td>
+                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">{{ displayValue(detail.tonaseBl) }}</td>
+                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">{{ displayValue(detail.tonaseWb) }}</td>
+                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">{{ displayValue(detail.shortOver) }}</td>
+                      <td class="px-4 py-3 text-right tabular-nums text-slate-800">{{ displayValue(detail.colli) }}</td>
                     </tr>
                     <tr v-if="!selectedEbast.detail?.length">
-                      <td colspan="6" class="px-4 py-6 text-center text-slate-500">
+                      <td colspan="7" class="px-4 py-6 text-center text-slate-500">
                         Tidak ada detail barang.
                       </td>
                     </tr>
@@ -410,8 +417,8 @@ onMounted(loadEbast)
               <ol v-if="selectedEbast.approval?.length" class="space-y-2">
                 <li
                   v-for="(approval, index) in selectedEbast.approval"
-                  :key="`${approval.levelApprove ?? index}-${approval.nama ?? ''}`"
-                  class="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3"
+                  :key="`${selectedEbast.id ?? selectedEbast.noBast}-approval-${index}`"
+                  class="flex items-start gap-3 rounded-xl border border-slate-200 px-4 py-3"
                 >
                   <span
                     class="grid size-8 shrink-0 place-items-center rounded-full bg-slate-100 text-xs font-bold text-slate-600"
@@ -423,6 +430,13 @@ onMounted(loadEbast)
                       {{ approval.nama || '-' }}
                     </p>
                     <p class="truncate text-xs text-slate-500">{{ approval.jabatan || '-' }}</p>
+                    <p
+                      v-if="approval.keterangan?.trim()"
+                      class="mt-1 whitespace-pre-wrap break-words text-xs text-slate-600"
+                    >
+                      <span class="font-medium text-slate-700">Keterangan:</span>
+                      {{ approval.keterangan }}
+                    </p>
                   </div>
                   <span
                     class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold"
